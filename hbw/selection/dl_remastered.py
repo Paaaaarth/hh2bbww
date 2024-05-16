@@ -73,8 +73,10 @@ def dl_lepton_selection(
     ) <= 2
 
     # select events
-    mu_mask_fakeable = lepton_results.x.mu_mask_fakeable
-    e_mask_fakeable = lepton_results.x.e_mask_fakeable
+    mu_mask_fakeable = lepton_results.x.mu_mask_tight # only for testing, switch back to fakeable
+    e_mask_fakeable = lepton_results.x.e_mask_tight # only for testing
+    # mu_mask_fakeable = lepton_results.x.mu_mask_fakeable
+    # e_mask_fakeable = lepton_results.x.e_mask_fakeable
 
     # NOTE: leading lepton pt could be reduced to trigger threshold + 1
     leading_mu_mask = (mu_mask_fakeable) & (events.Muon.pt > self.mu_pt)
@@ -106,37 +108,37 @@ def dl_lepton_selection(
 
     dilepton = ak.pad_none(lepton, 2)
     dilepton = dilepton[:, 0] + dilepton[:, 1]
-    lepton_results.steps["DiLeptonMass81"] = ak.fill_none(dilepton.mass <= m_z.nominal - 10, False)
+    lepton_results.steps["DiLeptonMass76"] = ak.fill_none(dilepton.mass <= m_z.nominal - 15, False)
     # lepton channel masks
     lepton_results.steps["Lep_mm"] = mm_mask = (
-        lepton_results.steps.ll_lowmass_veto &
+        # lepton_results.steps.ll_lowmass_veto &
         lepton_results.steps.Charge &
-        lepton_results.steps.DiLeptonMass81 &
+        lepton_results.steps.DiLeptonMass76 &
         lepton_results.steps.TripleLeptonVeto &
         (ak.sum(leading_mu_mask, axis=1) >= 1) &
         (ak.sum(subleading_mu_mask, axis=1) >= 2)
     )
     lepton_results.steps["Lep_ee"] = ee_mask = (
-        lepton_results.steps.ll_lowmass_veto &
+        # lepton_results.steps.ll_lowmass_veto &
         lepton_results.steps.TripleLeptonVeto &
         lepton_results.steps.Charge &
-        lepton_results.steps.DiLeptonMass81 &
+        lepton_results.steps.DiLeptonMass76 &
         (ak.sum(leading_e_mask, axis=1) >= 1) &
         (ak.sum(subleading_e_mask, axis=1) >= 2)
     )
     lepton_results.steps["Lep_emu"] = emu_mask = (
-        lepton_results.steps.ll_lowmass_veto &
+        # lepton_results.steps.ll_lowmass_veto &
         lepton_results.steps.TripleLeptonVeto &
         lepton_results.steps.Charge &
-        lepton_results.steps.DiLeptonMass81 &
+        lepton_results.steps.DiLeptonMass76 &
         (ak.sum(leading_e_mask, axis=1) >= 1) &
         (ak.sum(subleading_mu_mask, axis=1) >= 1)
     )
     lepton_results.steps["Lep_mue"] = mue_mask = (
-        lepton_results.steps.ll_lowmass_veto &
+        # lepton_results.steps.ll_lowmass_veto &
         lepton_results.steps.TripleLeptonVeto &
         lepton_results.steps.Charge &
-        lepton_results.steps.DiLeptonMass81 &
+        lepton_results.steps.DiLeptonMass76 &
         (ak.sum(leading_mu_mask, axis=1) >= 1) &
         (ak.sum(subleading_e_mask, axis=1) >= 1)
     )
@@ -321,7 +323,7 @@ def dl1(
         results.steps.ll_zmass_veto &
         results.steps.TripleLooseLeptonVeto &
         results.steps.Charge &
-        results.steps.DiLeptonMass81 &
+        results.steps.DiLeptonMass76 &
         results.steps.Dilepton &
         results.steps.Trigger &
         results.steps.TriggerAndLep
@@ -386,3 +388,4 @@ def dl1_init(self: Selector) -> None:
 
 
 dl1_no_btag = dl1.derive("dl1_no_btag", cls_dict={"n_btag": 0})
+dl1_compare_to_old = dl1.derive("dl1_compare_to_old", cls_dict={"jet_pt": 20., "mu_pt": 20., "ele_pt": 25.})

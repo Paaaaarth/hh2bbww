@@ -36,7 +36,7 @@ logger = law.logger.get_logger(__name__)
         four_vec("Electron", {
             "dxy", "dz", "cutBased",
         }) | four_vec("Muon", {
-            "dxy", "dz", "looseId", "pfIsoId",
+            "dxy", "dz", "looseId", "pfIsoId", "pfRelIso04_all"
         }) | four_vec("Tau", {
             "dz", "idDeepTau2017v2p1VSe", "idDeepTau2017v2p1VSmu", "idDeepTau2017v2p1VSjet", "decayMode",
         }) | {
@@ -93,12 +93,14 @@ def lepton_definition(
 
     e_mask_fakeable = (
         e_mask_loose &
-        (electron.pt >= 10)
+        electron[self.e_mva_iso_wp80] &  # for comparison
+        (electron.pt >= 15)
     )
 
     mu_mask_fakeable = (
         mu_mask_loose &
-        (muon.pt >= 10) &
+        (muon.pt >= 15) &
+        (muon.pfRelIso04_all < 0.15) &  # for comparison
         self.muon_id_req(muon)
     )
 
@@ -248,7 +250,7 @@ def lepton_definition_init(self: Selector) -> None:
     # mva isolation columns: depend on NanoAOD version
     self.e_mva_iso_wp80 = "mvaIso_WP90" if self.config_inst.x.run == 3 else "mvaFall17V2Iso_WP80"
     self.e_mva_iso_wp90 = "mvaIso_WP90" if self.config_inst.x.run == 3 else "mvaFall17V2Iso_WP90"
-
+    self.uses.add(f"Electron.{self.e_mva_iso_wp80}")
     electron_id_column = {
         "LooseId": "cutBased",
         "MediumId": "cutBased",

@@ -298,6 +298,12 @@ def add_config(
         3: "particlenet",
     }[cfg.x.run]
     cfg.x.btag_wp = "medium"
+    if cfg.x.b_tagger == "deepjet":
+        cfg.x.btag_sf = ("deepJet_shape", cfg.x.btag_sf_jec_sources, "btagDeepFlavB")
+        cfg.x.btag_column = "btagDeepFlavB"
+    elif cfg.x.b_tagger == "particlenet":
+        cfg.x.btag_sf = ("particleNet_shape", cfg.x.btag_sf_jec_sources, "btagPNetB")
+        cfg.x.btag_column = "btagPNetB"
 
     # top pt reweighting parameters
     # https://twiki.cern.ch/twiki/bin/viewauth/CMS/TopPtReweighting#TOP_PAG_corrections_based_on_dat?rev=31
