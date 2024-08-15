@@ -22,6 +22,7 @@ ak = maybe_import("awkward")
 @selector(
     uses=(four_vec({"Muon", "Electron"})) | {"TrigObj.*"},
     exposed=True,
+    version=1,
 )
 def trigger_sel(
         self: Selector,
@@ -90,19 +91,19 @@ def trigger_sel(
     # save selection results for different channels
     results.steps["SR_mu"] = (
         results.steps.cleanup &
-        results.steps.nJet1 &
+        results.steps.nJet3 &
         results.steps.nBjet1 &
         results.steps.TrigMuMask
     )
     results.steps["SR_ele"] = (
         results.steps.cleanup &
-        results.steps.nJet1 &
+        results.steps.nJet3 &
         results.steps.nBjet1 &
         results.steps.TrigEleMask
     )
     results.steps["all_but_bjet"] = (
         results.steps.cleanup &
-        results.steps.nJet1 &
+        results.steps.nJet3 &
         (results.steps.TrigMuMask | results.steps.TrigEleMask)
     )
 

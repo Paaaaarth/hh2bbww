@@ -73,7 +73,7 @@ def plot_efficiencies(
     for proc_inst, myhist in hists.items():
 
         # get normalisation from first histogram (all events)
-        norm_hist = np.array(myhist[:, 0].values())
+        norm_hist = myhist[:, 0]
 
         # plot config for the background distribution
         plot_config["hist_0"] = {
@@ -101,7 +101,7 @@ def plot_efficiencies(
                 "method": "draw_efficiency",
                 "hist": myhist[:, i],
                 "kwargs": {
-                    "norm": norm_hist,
+                    "h_norm": norm_hist,
                     "label": f"{proc_inst.label}: {config_inst.x.trigger_short[i]}",
                 },
             }

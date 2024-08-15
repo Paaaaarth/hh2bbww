@@ -11,6 +11,8 @@ from columnflow.columnar_util import set_ak_column
 from columnflow.production.categories import category_ids
 
 from hbw.trigger.trigger_config import add_trigger_categories
+from hbw.weight.default import default_weight_producer
+from hbw.production.weights import event_weights
 
 np = maybe_import("numpy")
 ak = maybe_import("awkward")
@@ -19,6 +21,7 @@ ak = maybe_import("awkward")
 @producer(
     produces={"trig_bits_mu", "trig_bits_orth_mu", "trig_bits_e", "trig_bits_orth_e"},
     channel=["mu", "e"],
+    version=1,
 )
 def trigger_prod(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     """
@@ -63,6 +66,7 @@ ele_trigger_prod = trigger_prod.derive("ele_trigger_prod", cls_dict={"channel": 
 @producer(
     uses=category_ids,
     produces=category_ids,
+    version=1,
 )
 def trig_cats(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     """
@@ -78,3 +82,26 @@ def trig_cats(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
 def trig_cats_init(self: Producer) -> None:
 
     add_trigger_categories(self.config_inst)
+
+
+@producer(
+    uses={
+        default_weight_producer,
+        event_weights,
+    },
+    produces={
+        "trig_weights",
+    },
+    version=1,
+)
+def trig_weights(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
+    """
+    Produces a weight column to check the event weights
+    """
+
+    events = self[event_weights](events, **kwargs)
+    events, weights = self[default_weight_producer](events, **kwargs)
+    trig_weights = weights
+    events = set_ak_column(events, "trig_weights", trig_weights)
+
+    return events

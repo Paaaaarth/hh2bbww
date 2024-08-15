@@ -46,6 +46,11 @@ def add_trigger_columns(config: od.Config) -> None:
         },
         x_title="Trigger names (orthogonal)",
     )
+    config.add_variable(
+        name="trig_weights",
+        binning=(100, -5, 5),
+        x_title="event weights",
+    )
 
 
 @call_once_on_config()
