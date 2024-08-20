@@ -8,11 +8,17 @@ triggers, reference triggers, trigger categories, variables for trigger studies
 import order as od
 import law
 
+from columnflow.util import maybe_import
+from columnflow.columnar_util import EMPTY_FLOAT
 from hbw.util import call_once_on_config
+
+np = maybe_import("numpy")
+ak = maybe_import("awkward")
 
 logger = law.logger.get_logger(__name__)
 
 
+# add trigger columns and adjust binning for certain variables
 @call_once_on_config()
 def add_trigger_columns(config: od.Config) -> None:
     """
@@ -52,40 +58,31 @@ def add_trigger_columns(config: od.Config) -> None:
         x_title="event weights",
     )
 
+    # adjust binning for certain variables
+    config.variables.remove("electron_pt")
+    config.variables.remove("muon_pt")
+    for obj in ["Electron", "Muon"]:
+        config.add_variable(
+                name=f"{obj.lower()}_pt",
+                expression=f"{obj}.pt[:,0]",
+                null_value=EMPTY_FLOAT,
+                binning=(600, 0., 350.),
+                unit="GeV",
+                x_title=obj + r" $p_{T}$",
+            )
 
-@call_once_on_config()
-def add_trigger_categories(config: od.Config) -> None:
-    """
-    Adds trigger categories to the config
-    """
-    # mc truth categories
-    cat_trig_mu = config.add_category(  # noqa
-        name="trig_mu",
-        id=1000,
-        selection="catid_trigger_mu",
-        label="Muon\n(MC truth)",
-    )
-    cat_trig_ele = config.add_category(  # noqa
-        name="trig_ele",
-        id=2000,
-        selection="catid_trigger_ele",
-        label="Electron\n(MC truth)",
-    )
-    # orthogonal categories
-    cat_trig_mu_orth = config.add_category(  # noqa
-        name="trig_mu_orth",
-        id=3000,
-        selection="catid_trigger_orth_mu",
-        label="Muon\northogonal\nmeasurement",
-    )
-    cat_trig_ele_orth = config.add_category(  # noqa
-        name="trig_ele_orth",
-        id=4000,
-        selection="catid_trigger_orth_ele",
-        label="Electron\northogonal\nmeasurement",
+    config.variables.remove("ht")
+    config.add_variable(
+        name="ht",
+        expression=lambda events: ak.sum(events.Jet.pt, axis=1),
+        aux={"inputs": {"Jet.pt"}},
+        binning=(600, 0, 1200),
+        unit="GeV",
+        x_title="HT",
     )
 
 
+# add triggers and trigger related attributes to the main analysis config
 @call_once_on_config()
 def add_trigger_config(config: od.Config, **kwargs) -> None:
     """

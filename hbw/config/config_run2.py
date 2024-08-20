@@ -715,6 +715,7 @@ def add_config(
         from hbw.config.sl_res import configure_sl_res
         configure_sl_res(cfg)
 
+    #  add triggers and trigger related variables, categories, etc.
     add_trigger_config(cfg, year=year)
 
     return cfg
