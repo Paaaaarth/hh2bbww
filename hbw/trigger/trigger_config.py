@@ -63,13 +63,13 @@ def add_trigger_columns(config: od.Config) -> None:
     config.variables.remove("muon_pt")
     for obj in ["Electron", "Muon"]:
         config.add_variable(
-                name=f"{obj.lower()}_pt",
-                expression=f"{obj}.pt[:,0]",
-                null_value=EMPTY_FLOAT,
-                binning=(600, 0., 350.),
-                unit="GeV",
-                x_title=obj + r" $p_{T}$",
-            )
+            name=f"{obj.lower()}_pt",
+            expression=f"{obj}.pt[:,0]",
+            null_value=EMPTY_FLOAT,
+            binning=(600, 0., 350.),
+            unit="GeV",
+            x_title=obj + r" $p_{T}$",
+        )
 
     config.variables.remove("ht")
     config.add_variable(
