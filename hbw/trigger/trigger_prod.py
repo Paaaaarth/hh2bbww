@@ -30,6 +30,8 @@ def trigger_prod(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     This column can then be used to fill a Histogram where each bin corresponds to a certain trigger.
     """
 
+    # TODO: check if trigger were fired by unprescaled L1 seed
+
     for channel in self.channel:
 
         trig_bits = ak.Array([["allEvents"]] * len(events))

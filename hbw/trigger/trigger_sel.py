@@ -20,7 +20,7 @@ ak = maybe_import("awkward")
 
 
 @selector(
-    uses=(four_vec({"Muon", "Electron"})) | {"TrigObj.*"},
+    uses=(four_vec({"Muon", "Electron"})),
     exposed=True,
     version=1,
 )
@@ -63,31 +63,6 @@ def trigger_sel(
         events.Electron.pt,
     )
 
-    # check for match between offline and HLT objects
-    hlt_muon_obj_mask = events.TrigObj.id == 13
-    hlt_electron_obj_mask = events.TrigObj.id == 11
-
-    hlt_muon_mask = hlt_muon_obj_mask & ((events.TrigObj.filterBits & (1 << 3)) > 0)
-    hlt_electron_mask = hlt_electron_obj_mask & ((events.TrigObj.filterBits & (1 << 1)) > 0)
-    hlt_muon = events.TrigObj[hlt_muon_mask]
-    hlt_electron = events.TrigObj[hlt_electron_mask]
-    mu_combo = ak.cartesian({"offl": muons, "trigobj": hlt_muon}, nested=True)
-    e_combo = ak.cartesian({"offl": electrons, "trigobj": hlt_electron}, nested=True)
-
-    off_mu, hlt_mu = ak.unzip(mu_combo)
-    off_ele, hlt_ele = ak.unzip(e_combo)
-
-    dR_mu = off_mu.delta_r(hlt_mu)
-    dR_ele = off_ele.delta_r(hlt_ele)
-
-    mindR_mu = ak.min(dR_mu, axis=-1)
-    mindR_ele = ak.min(dR_ele, axis=-1)
-
-    results.steps["TrigMuMatch"] = ak.sum(ak.fill_none(mindR_mu < 0.2, False), axis=1) >= 1
-    results.steps["TrigEleMatch"] = ak.sum(ak.fill_none(mindR_ele < 0.2, False), axis=1) >= 1
-
-    # TODO: check if trigger were fired by unprescaled L1 seed
-
     # save selection results for different channels
     results.steps["SR_mu"] = (
         results.steps.cleanup &
@@ -126,10 +101,7 @@ def trigger_sel(
 def trigger_sel_init(self: Selector) -> None:
 
     # init gets called multiple times, so we need to check if the config and dataset instances are already set
-    if not getattr(self, "config_inst", None):
-        return
-
-    if not getattr(self, "dataset_inst", None):
+    if not getattr(self, "config_inst", None) or not getattr(self, "dataset_inst", None):
         return
 
     configure_selector(self)
