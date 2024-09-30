@@ -10,7 +10,7 @@ from columnflow.util import maybe_import
 from columnflow.columnar_util import set_ak_column
 from columnflow.production.categories import category_ids
 
-from hbw.trigger.categories import add_trigger_categories
+from trigger.categories import add_trigger_categories
 from hbw.weight.default import default_weight_producer
 from hbw.production.weights import event_weights
 

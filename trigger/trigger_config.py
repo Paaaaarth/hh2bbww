@@ -32,13 +32,6 @@ def add_trigger_columns(config: od.Config) -> None:
         x_title="Trigger names",
     )
     config.add_variable(
-        name="trig_bits_orth_mu",
-        aux={
-            "axis_type": "strcat",
-        },
-        x_title="Trigger names (orthogonal)",
-    )
-    config.add_variable(
         name="trig_bits_e",
         aux={
             "axis_type": "strcat",
@@ -46,16 +39,14 @@ def add_trigger_columns(config: od.Config) -> None:
         x_title="Trigger names",
     )
     config.add_variable(
-        name="trig_bits_orth_e",
-        aux={
-            "axis_type": "strcat",
-        },
-        x_title="Trigger names (orthogonal)",
-    )
-    config.add_variable(
         name="trig_weights",
         binning=(100, -5, 5),
         x_title="event weights",
+    )
+    config.add_variable(
+        name="trigger_sf_weights",
+        binning=(50, 0, 2),
+        x_title=("trigger scale factors")
     )
 
     # adjust binning for certain variables

@@ -33,7 +33,7 @@ logger = law.logger.get_logger(__name__)
 law run cf.PlotVariables1D --version v1 --config l22post \
 --processes tt_dl --variables electron_pt-trig_bits --categories trig_mu \
 --selector trigger_sel --producers event_weights,trigger_prod \
---plot-function hbw.trigger.plot_efficiencies.plot_efficiencies \
+--plot-function trigger.plot_efficiencies.plot_efficiencies \
 --variable-settings "electron_pt,rebin=5,x_min=0,x_max=100" \
 --general-settings "bin_sel=Ele30_WPTight_Gsf;"
 """

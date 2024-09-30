@@ -9,7 +9,7 @@ law run cf.PlotVariables2D --version v1 --config c22pre \
 --processes tt_dl \
 --variables ht-electron_pt-trig_bits_e \
 --general-settings "bin_sel=Ele30_WPTight_Gsf" \
---plot-function hbw.trigger.plot_efficiencies2d.plot_efficiencies2d
+--plot-function trigger.plot_efficiencies2d.plot_efficiencies2d
 """
 
 from __future__ import annotations
@@ -189,15 +189,16 @@ def plot_efficiencies2d(
             "yscale": "log" if variable_insts[1].log_x else "linear",
         },
         "legend_cfg": {
-            "title": "Process" if len(hists.keys()) == 1 else "Processes",
+            # "title": "Process" if len(hists.keys()) == 1 else "Processes",
             "handles": [mpl.lines.Line2D([0], [0], lw=0) for proc_inst in hists.keys()],  # dummy handle
-            "labels": [f"{proc_inst.label}\n{eff_bin}" for proc_inst in hists.keys()],
+            "labels": [f"Process:\n {proc_inst.label}\nTrigger:\n HLT_{eff_bin}" for proc_inst in hists.keys()],
             "ncol": 1,
             "loc": "upper right",
             # "labelcolor": "white",
         },
         "cms_label_cfg": {
             "lumi": config_inst.x.luminosity.get("nominal") / 1000,  # pb -> fb
+            "com": config_inst.campaign.ecm,
         },
         "plot2d_cfg": {
             "norm": cbar_norm,
@@ -289,6 +290,8 @@ def plot_efficiencies2d(
     # called internally by mplhep to draw the extension symbols
     with patch.object(plt, "colorbar", partial(plt.colorbar, extend=extend)):
         h_sum.plot2d(ax=ax, **style_config["plot2d_cfg"])
+
+    # ax.collections[0].colorbar.set_label("Efficiency", fontsize=22, labelpad=20)
 
     # add contour lines, if requested smoothed
     if kwargs.get("contour", False):

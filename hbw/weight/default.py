@@ -180,3 +180,10 @@ base.derive("norm_and_btag_ht", cls_dict={"weight_columns": {
     "stitched_normalization_weight": [],
     "normalized_ht_btag_weight": [f"btag_{unc}" for unc in btag_uncs],
 }})
+
+# weight producer for trigger scale factors
+trigger_weight_columns = {
+    "trigger_sf_weights": [],
+    **default_weight_columns
+}
+default_incl_trigger_prod = base.derive("default_incl_trigger", cls_dict={"weight_columns": trigger_weight_columns})

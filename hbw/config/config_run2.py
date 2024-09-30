@@ -23,7 +23,7 @@ from hbw.config.datasets import add_hbw_processes_and_datasets, configure_hbw_da
 from hbw.config.processes import configure_hbw_processes
 from hbw.config.defaults_and_groups import set_config_defaults_and_groups
 from hbw.util import timeit_multiple
-from hbw.trigger.trigger_config import add_trigger_config
+from trigger.trigger_config import add_trigger_config
 
 thisdir = os.path.dirname(os.path.abspath(__file__))
 
@@ -588,6 +588,9 @@ def add_config(
     if cfg.x.run == 2:
         # met phi corrector (still unused and missing in Run3)
         add_external("met_phi_corr", (f"{json_mirror}/POG/JME/{corr_tag}/met.json.gz", "v1"))
+
+    # trigger sf
+    add_external("ele_trigger_sf", ("/nfs/dust/cms/user/letzerba/hh2bbww/data/cf_store/hbw_sl/cf.CalculateTriggerScaleFactors/c22pre/nominal/calib__with_b_reg/sel__trigger_selV1/prod__trigger_prodV1__event_weightsV1__trig_catsV1/weight__default/datasets_3_572d161eda/prod3/sf_Ele30_WPTight_Gsf_electron_pt-trig_bits_e.json.gz", "v1"))  # noqa
 
     # documentation: https://twiki.cern.ch/twiki/bin/view/CMS/MissingETOptionalFiltersRun2?rev=167
     if cfg.x.run == 2:
