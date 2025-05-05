@@ -207,8 +207,7 @@ def stylize_processes(config: od.Config) -> None:
         if proc.name.lower().startswith("hhh"): 
             proc.add_tag("is_signal")
             proc.unstack = True
-            # __import__("IPython").embed()
-            # proc.scale = "stack"
+            proc.scale = "stack"
 
         # labels used for ML categories
         proc.x.ml_label = ml_labels.get(proc.name, proc.name)
