@@ -430,11 +430,11 @@ def set_config_defaults_and_groups(config_inst):
         },
     }
     config_inst.x.process_settings_groups = {
-        "default": {default_signal_process: {"scale": 2000, "unstack": True}},
+        "default": {default_signal_process: {"scale": 2, "unstack": True}},
         "unstack_all": {proc.name: {"unstack": True} for proc, _, _ in config_inst.walk_processes()},
         "unstack_signal": {proc.name: {"unstack": True} for proc in config_inst.processes if "HH" in proc.name},
         "scale_signal": {
-            proc.name: {"unstack": True, "scale": 10000}
+            proc.name: {"unstack": True, "scale": 1}
             for proc, _, _ in config_inst.walk_processes() if proc.has_tag("is_signal")
         },
         "scale_signal1": {
