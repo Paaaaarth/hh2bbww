@@ -19,6 +19,7 @@ def modify_cmsdb_processes():
         qcd_mu, qcd_em, qcd_bctoe,
         tt, ttv, st, w_lnu, vv, h,
         dy, dy_m4to10, dy_m10to50, dy_m50toinf, dy_m50toinf_0j, dy_m50toinf_1j, dy_m50toinf_2j,
+        hhh_4b2w_c30_d40,
     )
 
     qcd_mu.label = "QCD Muon enriched"

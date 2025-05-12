@@ -86,10 +86,7 @@ default_process_colors = {
     "vv": color_palette["blue"],
     "other": color_palette["grey"],
     "hh_ggf_hbb_htt": color_palette["grey"],
-    "signal_ggf2": color_palette["black"],
-    "signal_vbf2": color_palette["grey"],
-    "hh_ggf_hbb_hww2l2nu_kl1_kt1": color_palette["black"],
-    "hh_vbf_hbb_hww2l2nu_kv1_k2v1_kl1": color_palette["grey"],
+    "hhh": color_palette["orange"],
 }
 
 for decay in ("", "qqlnu", "2l2nu"):
@@ -206,11 +203,11 @@ def stylize_processes(config: od.Config) -> None:
 
         if short_label := short_labels.get(proc.name, None):
             proc.short_label = short_label
-
-        # unstack signal in plotting
-        if "hh_" in proc.name.lower():
+        # unstack signal in plog
+        if proc.name.lower().startswith("hhh"): 
             proc.add_tag("is_signal")
             proc.unstack = True
+            # __import__("IPython").embed()
             # proc.scale = "stack"
 
         # labels used for ML categories
