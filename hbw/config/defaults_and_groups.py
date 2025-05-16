@@ -95,8 +95,8 @@ def set_config_defaults_and_groups(config_inst):
     year = config_inst.campaign.x.year
 
     # define the default dataset and process based on the analysis tags
-    signal_tag = "qqlnu" if config_inst.has_tag("is_sl") else "2l2nu"
-    default_signal_process = "hh_ggf_hbb_hvv_kl1_kt1"
+    signal_tag = "qqlns" if config_inst.has_tag("is_sl") else "2l2nu"
+    default_signal_process = "hhh_4b2w_c30_d40"
     signal_generator = "powheg"
 
     if config_inst.has_tag("resonant"):
@@ -142,6 +142,8 @@ def set_config_defaults_and_groups(config_inst):
     # (used in wrapper_factory and during plotting)
     config_inst.x.process_groups = {
         # Collection of VBF samples with most shape and rate difference
+        "hhh_signal":["hhh_4b2w_c30_d40"],
+        "hhh_background": ["tth", "st", "dy", "tt", "hh", "vv", "w_lnu", "h" ], 
         "gen_vbf": [
             "hh_vbf_hbb_hww2l2nu_kvm0p758_k2v1p44_klm19p3",
             "hh_vbf_hbb_hww2l2nu_kv1_k2v1_kl1",
@@ -441,11 +443,11 @@ def set_config_defaults_and_groups(config_inst):
         },
     }
     config_inst.x.process_settings_groups = {
-        "default": {default_signal_process: {"scale": 2, "unstack": True}},
+        "default": {default_signal_process: {"scale": 2000, "unstack": True}},
         "unstack_all": {proc.name: {"unstack": True} for proc, _, _ in config_inst.walk_processes()},
         "unstack_signal": {proc.name: {"unstack": True} for proc in config_inst.processes if "HH" in proc.name},
         "scale_signal": {
-            proc.name: {"unstack": True, "scale": 1}
+            proc.name: {"unstack": True, "scale": 10000}
             for proc, _, _ in config_inst.walk_processes() if proc.has_tag("is_signal")
         },
         "scale_signal1": {
