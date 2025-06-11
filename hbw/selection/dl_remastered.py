@@ -305,7 +305,7 @@ def dl1_init(self: Selector) -> None:
     if self.n_jet is None:
         self.n_jet = 1
     if self.n_btag is None:
-        self.n_btag = 1
+        self.n_btag = 2
 
     # configuration of selection parameters
     # apparently, this init only runs after the used selectors, but we can run this init first

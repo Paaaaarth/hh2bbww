@@ -142,8 +142,32 @@ def set_config_defaults_and_groups(config_inst):
     # (used in wrapper_factory and during plotting)
     config_inst.x.process_groups = {
         # Collection of VBF samples with most shape and rate difference
-        "hhh_signal":["hhh_4b2w_c30_d40"],
-        "hhh_background": ["tth", "st", "dy", "tt", "hh", "vv", "w_lnu", "h" ], 
+        # Datasets removed because no events are selected or not used in the analysis
+        # hh(BSM),h(wmh_wlnu_hcc_powheg, zh_zqq_hbb_powheg, h_vbf_hww2l2nu_powheg,
+        # h_vbf_hbb_powheg)
+        "hhh_sm":["hhh_4b2w_c30_d40"],
+        "hhh_bsm": ["hhh_4b2w_c3_0_d4_99", "hhh_4b2w_c3_0_d4_minus1", 
+                    "hhh_4b2w_c3_19_d4_19", "hhh_4b2w_c3_1_d4_0", 
+                    "hhh_4b2w_c3_1_d4_2", "hhh_4b2w_c3_2_d4_minus1", 
+                    "hhh_4b2w_c3_4_d4_9", "hhh_4b2w_c3_minus1_d4_0", 
+                    "hhh_4b2w_c3_minus1_d4_minus1", "hhh_4b2w_c3_minus1p5_d4_minus0p5"],
+        "hhh_background": ["tth", "st", "dy", "vv", "tt", "hh_sm", "h"],
+        "hhh_background_limited": ["tth", "st", "dy", "vv", "tt_limited", "hh_sm", "h_limited"],
+        "tt_limited": ["tt_dl", "tt_sl"],
+        "h_limited": [
+			"h_ggf_hww2l2nu",
+			"zh_zll_hbb", "zh_zll_hcc", "zh_hww2l2nu", 
+            "zh_gg_zll_hbb", "zh_gg_zqq_hbb", "zh_gg_zll_hcc",
+			"wph_wlnu_hbb", "wph_wlnu_hcc", "wph_hzg_zll", "wmh_wlnu_hbb", "wmh_hzg_zll",
+			"tth_hbb", "tth_hnonbb"
+        ],
+
+        "hh_sm": [
+            "hh_ggf_hbb_hww_kl1_kt1", 
+            "hh_vbf_hbb_hww_kv1_k2v1_kl1", 
+            "hh_ggf_hbb_hzz_kl1_kt1", 
+            "hh_ggf_hbb_htt_kl1_kt1",
+        ],
         "gen_vbf": [
             "hh_vbf_hbb_hww2l2nu_kvm0p758_k2v1p44_klm19p3",
             "hh_vbf_hbb_hww2l2nu_kv1_k2v1_kl1",

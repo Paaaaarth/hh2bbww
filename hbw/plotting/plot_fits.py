@@ -110,6 +110,7 @@ def plot_fit(
 
         # read out histogram
         values = h.values()
+        print(f"values: {values}")
         bin_edges = h.axes[variable_inst.name].edges
         bin_centers = h.axes[variable_inst.name].centers
         xmin, xmax = bin_edges[0], bin_edges[-1]

@@ -57,9 +57,9 @@ def create_hbw_analysis(
     ]
 
     # cmssw sandboxes that should be bundled for remote jobs in case they are needed
-    analysis_inst.set_aux("cmssw_sandboxes", [
-        "$CF_BASE/sandboxes/cmssw_default.sh",
-    ])
+    # analysis_inst.set_aux("cmssw_sandboxes", [
+    #     "$CF_BASE/sandboxes/cmssw_default.sh",
+    # ])
 
     # clear the list when cmssw bundling is disabled
     if not law.util.flag_to_bool(os.getenv("HBW_BUNDLE_CMSSW", "1")):
