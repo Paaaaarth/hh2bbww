@@ -117,6 +117,62 @@ def add_common_ml_variables(config: od.Config) -> None:
         binning=(40, 0, 12),
         x_title=r"max $\Delta R(j,j)$",
     )
+    config.add_variable(
+        name="mli_mbb_sum",
+        expression="mli_mbb_sum",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$|m_{b_1b_2}|$",
+    )
+    config.add_variable(
+        name="mli_mbb_sum_2",
+        expression="mli_mbb_sum_2",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$|m_{b_3b_4}|$",
+    )
+    config.add_variable(
+        name="mli_mbb_dr_sum",
+        expression="mli_mbb_dr_sum",
+        binning=(40, 0, 200),
+        x_title=r"$m_{h_{\Delta R(b_1,b_2)}} [Smallest]$",
+    )
+    config.add_variable(
+        name="mli_mbb_dr_sum_2",
+        expression="mli_mbb_dr_sum_2",
+        binning=(40, 0, 200),
+        x_title=r"$m_{h_{\Delta R(b_x,b_y)}}$ [Second least]",
+    )
+    config.add_variable(
+        name="mli_mbb_remaining",
+        expression="mli_mbb_remaining",
+        binning=(40, 0, 200),
+        x_title=r"$m_{h_{b_3b_4}} remaining$",
+    )
+    config.add_variable(
+        name="mli_mbb_dr_all_sum",
+        expression="mli_mbb_dr_all_sum",
+        binning=(40, 0, 200),
+        x_title=r"$m_{h_{\Delta R(j,j)}}$",
+    )
+    config.add_variable(
+        name="mli_mbb_dr_max_sum",
+        expression="mli_mbb_dr_max_sum",
+        binning=(40, 0, 400),
+        x_title=r"$m_{h_{\Delta R(b,b)}}$ Max",
+    )
+    config.add_variable(
+        name="mli_hh_dr",
+        expression="mli_hh_dr",
+        binning=(40, 0, 8),
+        x_title=r"$\Delta R(h,h)$",
+    )
+    config.add_variable(
+        name="mli_dr_h_ll",
+        expression="mli_dr_h_ll",
+        binning=(40, 0, 8),
+        x_title=r"$\Delta R(h,h)$",
+    )
 
     # vbf features for central jets and incljets
     for eta_range, prefix in (
@@ -165,7 +221,7 @@ def add_common_ml_variables(config: od.Config) -> None:
     # low-level variables
     #
 
-    for obj in ["b1", "b2", "j1", "j2"]:
+    for obj in ["b1", "b2", "b3", "b4", "j1", "j2"]:
         for var in ["b_score"]:
             config.add_variable(
                 name=f"mli_{obj}_{var}",
@@ -175,7 +231,7 @@ def add_common_ml_variables(config: od.Config) -> None:
                 x_title="{obj} {var}".format(obj=obj, var=var),
             )
 
-    for obj in ["b1", "b2", "j1", "j2", "lep", "met"]:
+    for obj in ["b1", "b2", "b3", "b4", "j1", "j2", "lep", "met"]:
         for var in ["pt", "eta", "phi"]:
             if var == "eta" and obj == "met":
                 continue

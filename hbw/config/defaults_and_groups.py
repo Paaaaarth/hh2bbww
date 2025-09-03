@@ -120,8 +120,12 @@ def set_config_defaults_and_groups(config_inst):
     config_inst.x.default_hist_producer = "with_trigger_weight"
     config_inst.x.default_ml_model = default_ml_model
     config_inst.x.default_inference_model = "default" if year == 2017 else "sl_22"
-    config_inst.x.default_categories = ["incl", "sr", "dycr", "ttcr"]
-    config_inst.x.default_variables = ["jet0_pt", "mll", "n_jet", "ptll", "lepton0_pt", "lepton1_pt"]
+    # config_inst.x.default_categories = ["incl", "sr", "dycr", "ttcr", "3b", "4b", "sr_3b", "sr_4b"]
+    config_inst.x.default_categories = ["incl", "sr", "3b", "4b", "sr_3b", "sr_4b", "3b_exact", "sr_3b_exact"]
+    config_inst.x.default_variables = ["jet0_pt", "mll", "ptll", "lepton0_pt", "lepton1_pt", "mli_mbb_sum", "mli_mbb_sum_2", 
+                                        "mli_mbb_dr_sum", "mli_mbb_dr_sum_2", "mli_mbb_remaining", "mli_mbb_dr_max_sum",
+                                        "mli_mbb_dr_all_sum",]
+    config_inst.x.default_processes = ["hhh_sm", "hhh_background"]
 
     # general_settings default needs to be tuple (or dict) to be resolved correctly
     config_inst.x.default_general_settings = ("data_mc_plots",)
@@ -142,17 +146,15 @@ def set_config_defaults_and_groups(config_inst):
     # (used in wrapper_factory and during plotting)
     config_inst.x.process_groups = {
         # Collection of VBF samples with most shape and rate difference
-        # Datasets removed because no events are selected or not used in the analysis
-        # hh(BSM),h(wmh_wlnu_hcc_powheg, zh_zqq_hbb_powheg, h_vbf_hww2l2nu_powheg,
-        # h_vbf_hbb_powheg)
         "hhh_sm":["hhh_4b2w_c30_d40"],
         "hhh_bsm": ["hhh_4b2w_c3_0_d4_99", "hhh_4b2w_c3_0_d4_minus1", 
                     "hhh_4b2w_c3_19_d4_19", "hhh_4b2w_c3_1_d4_0", 
                     "hhh_4b2w_c3_1_d4_2", "hhh_4b2w_c3_2_d4_minus1", 
                     "hhh_4b2w_c3_4_d4_9", "hhh_4b2w_c3_minus1_d4_0", 
-                    "hhh_4b2w_c3_minus1_d4_minus1", "hhh_4b2w_c3_minus1p5_d4_minus0p5"],
-        "hhh_background": ["tth", "st", "dy", "vv", "tt", "hh_sm", "h"],
-        "hhh_background_limited": ["tth", "st", "dy", "vv", "tt_limited", "hh_sm", "h_limited"],
+                    "hhh_4b2w_c3_minus1p5_d4_minus0p5"],
+        "hhh_fake": ["hhh_4b2w_c3_minus1_d4_minus1"],
+        "hhh_background": ["st", "dy", "vv", "tt", "hh_sm", "h"],
+        "hhh_background_limited": ["st", "dy", "vv", "tt_limited", "hh_sm", "h_limited"],
         "tt_limited": ["tt_dl", "tt_sl"],
         "h_limited": [
 			"h_ggf_hww2l2nu",

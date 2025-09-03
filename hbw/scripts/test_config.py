@@ -122,4 +122,4 @@ cfg.x.example = "another test"
 print(cfg.x.example)
 
 # opens a debugger for trying out yourself
-__import__("IPython").embed()
+# __import__("IPython").embed()

@@ -214,18 +214,42 @@ def add_jet_categories(config: od.Config) -> None:
         label="boosted",
     )
 
-    cat_1b = config.add_category(  # noqa: F841
-        name="1b",
-        id=300,
-        selection="catid_1b",
-        label=r"$\leq 1 btag$",
+    # cat_1b = config.add_category(  # noqa: F841
+    #     name="1b",
+    #     id=300,
+    #     selection="catid_1b",
+    #     label=r"$\leq 1 btag$",
+    # )
+    # cat_2b = config.add_category(  # noqa: F841
+    #     name="2b",
+    #     id=600,
+    #     selection="catid_2b",
+    #     label=r"$\geq 2 btag$",
+    # )
+    cat_3b = config.add_category(  # noqa: F841
+        name="3b",
+        id=7000,
+        selection="catid_3b",
+        label=r"$\geq 3 btag$",
     )
-    cat_2b = config.add_category(  # noqa: F841
-        name="2b",
-        id=600,
-        selection="catid_2b",
-        label=r"$\geq 2 btag$",
+    cat_3b_exact = config.add_category(  # noqa: F841
+        name="3b_exact",
+        id=8000,
+        selection="catid_3b_exact",
+        label=r"$3 btag$",
     )
+    cat_4b = config.add_category(  # noqa: F841
+        name="4b",
+        id=9000,
+        selection="catid_4b",
+        label=r"$\geq 4 btag$",
+    )
+    # cat_4b_exact = config.add_category(  # noqa: F841
+    #     name="4b_exact",
+    #     id=911,
+    #     selection="catid_4b_exact",
+    #     label=r"$4 btag$",
+    # )
 
 
 @call_once_on_config()
@@ -260,7 +284,7 @@ def add_categories_selection(config: od.Config) -> None:
 
 
 def name_fn(root_cats):
-    cat_name = "__".join(cat.name for cat in root_cats.values())
+    cat_name = "_".join(cat.name for cat in root_cats.values())
     return cat_name
 
 
@@ -286,6 +310,7 @@ def add_categories_production(config: od.Config) -> None:
         return
 
     add_jet_categories(config)
+    # add_combined_categories(config)
 
     #
     # define all combinations of categories
@@ -297,7 +322,7 @@ def add_categories_production(config: od.Config) -> None:
         # "met": [config.get_category("highmet"), config.get_category("lowmet")],
         "lep": [config.get_category(lep_ch) for lep_ch in config.x.lepton_channels],
         "jet": [config.get_category("resolved"), config.get_category("boosted")],
-        "b": [config.get_category("1b"), config.get_category("2b")],
+        "b": [config.get_category("3b"), config.get_category("3b_exact"), config.get_category("4b")],
     })
     t0 = time()
     n_cats = create_category_combinations(
@@ -363,7 +388,7 @@ def add_categories_ml(config, ml_model_inst):
         # "met": [config.get_category("highmet"), config.get_category("lowmet")],
         "lep": [config.get_category(lep_ch) for lep_ch in config.x.lepton_channels],
         "jet": [config.get_category("resolved"), config.get_category("boosted")],
-        "b": [config.get_category("1b"), config.get_category("2b")],
+        "b": [config.get_category("3b"), config.get_category("3b_exact"), config.get_category("4b")],
         "dnn": ml_categories,
     })
 

@@ -105,7 +105,7 @@ def common_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
 
     # object padding
     events = set_ak_column(events, "Lightjet", ak.pad_none(events.Lightjet, 2))
-    events = set_ak_column(events, "Bjet", ak.pad_none(events.Bjet, 2))
+    events = set_ak_column(events, "Bjet", ak.pad_none(events.Bjet, 4))
     events = set_ak_column(events, "FatBjet", ak.pad_none(events.FatBjet, 1))
 
     # setup correct btagging columns
@@ -127,6 +127,8 @@ def common_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     for var in ["pt", "eta", "b_score"]:
         events = set_ak_column_f32(events, f"mli_b1_{var}", events.Bjet[:, 0][var])
         events = set_ak_column_f32(events, f"mli_b2_{var}", events.Bjet[:, 1][var])
+        events = set_ak_column_f32(events, f"mli_b3_{var}", events.Bjet[:, 2][var])
+        events = set_ak_column_f32(events, f"mli_b4_{var}", events.Bjet[:, 3][var])
         # even in DL, ~10% of events contain 4 jets, so it might be worth keeping this
         events = set_ak_column_f32(events, f"mli_j1_{var}", events.Lightjet[:, 0][var])
         events = set_ak_column_f32(events, f"mli_j2_{var}", events.Lightjet[:, 1][var])
@@ -156,12 +158,12 @@ def common_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     events = set_ak_column_f32(events, "mli_maxdr_jj", ak.max(dr, axis=1))
 
     # hbb features
-    hbb = (events.Bjet[:, 0] + events.Bjet[:, 1]) * 1  # NOTE: *1 so it is a Lorentzvector not a candidate vector
+    hbb = (events.Bjet[:, 0] + events.Bjet[:, 1] + events.Bjet[:, 2] + events.Bjet[:, 3]) * 1  # NOTE: *1 so it is a Lorentzvector not a candidate vector
     events = set_ak_column_f32(events, "mli_bb_pt", hbb.pt)
     events = set_ak_column_f32(events, "mli_mbb", hbb.mass)
 
     events = set_ak_column_f32(events, "mli_dr_bb", events.Bjet[:, 0].delta_r(events.Bjet[:, 1]))
-    events = set_ak_column_f32(events, "mli_dphi_bb", abs(events.Bjet[:, 0].delta_phi(events.Bjet[:, 1])))
+    events = set_ak_column_f32(events, "mli_dphi_bb", abs(events.Bjet[:, 0].delta_phi(events.Bjet[:, 1]))) # is there a delta phi missing here?
     events = set_ak_column_f32(events, "mli_deta_bb", abs(events.Bjet[:, 0].eta - (events.Bjet[:, 1]).eta))
 
     # angles to lepton
@@ -205,7 +207,7 @@ def common_ml_inputs_init(self: Producer) -> None:
         for var in ["pt", "eta", "phi", "mass", "deta", "tag"]
     ) | set(
         f"mli_{obj}_{var}"
-        for obj in ["b1", "b2", "j1", "j2"]
+        for obj in ["b1", "b2", "b3", "b4", "j1", "j2"]
         for var in ["b_score", "pt", "eta"]
     ) | set(
         f"mli_{obj}_{var}"
@@ -362,12 +364,62 @@ def dl_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     min_dr_llbb = (ak.min(lep.delta_r(jet), axis=-1))
     events = set_ak_column_f32(events, "mli_min_dr_llbb", min_dr_llbb)
 
-    # hh system
-    hbb = (events.Bjet[:, 0] + events.Bjet[:, 1]) * 1  # NOTE: *1 so it is a Lorentzvector not a candidate vector
+    # hhh system
+    hbb = (events.Bjet[:, 0] + events.Bjet[:, 1] + events.Bjet[:, 2] + events.Bjet[:, 3]) * 1  # NOTE: *1 so it is a Lorentzvector not a candidate vector
     events = set_ak_column_f32(events, "mli_mbbllMET", (hll + hbb + events[met_name][:]).mass)
     events = set_ak_column_f32(events, "mli_dr_bb_llMET", hbb.delta_r(hll + events[met_name][:]))
     events = set_ak_column_f32(events, "mli_dphi_bb_nu", abs(hbb.delta_phi(events[met_name])))
     events = set_ak_column_f32(events, "mli_dphi_bb_llMET", hbb.delta_phi(hll + events[met_name][:]))
+    
+    # test variables for bjet(Higgs identification)
+    bb_sum = ((events.Bjet[:, 0] + events.Bjet[:, 1])) * 1
+    bb_sum_2 = ((events.Bjet[:, 2] + events.Bjet[:, 3])) * 1
+   
+    # Trying higgs reconstruction based on delta R
+    bb_pairs = ak.combinations(events.Bjet, 2)
+    bb_dr = bb_pairs[:, "0"].delta_r(bb_pairs[:, "1"]) 
+
+    # pair of least delta R
+    dr_min_idx = ak.argmin(bb_dr, axis=1, keepdims=True)  
+    dr_min_pair = ak.flatten(bb_pairs[dr_min_idx], axis=1)
+    bb_dr_sum = dr_min_pair["0"] + dr_min_pair["1"]
+
+    # finding the remaining two objets (needs to be improved and generalized)    
+    idx_remaining = 5 - dr_min_idx
+    other_pair = ak.flatten(bb_pairs[idx_remaining], axis=1)
+    bb_remaining = other_pair["0"] + other_pair["1"]
+
+    # delta R between two higgs candidates(Sort of...)
+    hh_dr = bb_dr_sum.delta_r(bb_remaining)
+
+    # pair with second least delta R
+    sorted_indices = ak.argsort(bb_dr, axis=1)
+    second_least_idx = sorted_indices[:, 1:2]
+    second_least_dr_pair = ak.flatten(bb_pairs[second_least_idx], axis=1)
+    bb_dr_sum_2 = second_least_dr_pair[:, "0"] + second_least_dr_pair[:, "1"]
+
+    # pair with maximum value of delta R
+    dr_max_idx = ak.argmax(bb_dr, axis=1, keepdims=True)
+    dr_max_pair = ak.flatten(bb_pairs[dr_max_idx], axis=1)
+    bb_dr_max_sum = dr_max_pair["0"] + dr_max_pair["1"]
+
+    # pair of least delta R with all jets
+    bb_pairs_all = ak.combinations(events.Jet, 2)
+    bb_dr_all = bb_pairs_all[:, "0"].delta_r(bb_pairs_all[:, "1"]) 
+    dr_min_idx_all = ak.argmin(bb_dr_all, axis=1, keepdims=True)
+    dr_min_pair_all = ak.flatten(bb_pairs_all[dr_min_idx_all], axis=1)
+    bb_dr_all_sum = dr_min_pair_all["0"] + dr_min_pair_all["1"]
+
+    events = set_ak_column_f32(events, "mli_mbb_sum", bb_sum.mass)
+    events = set_ak_column_f32(events, "mli_mbb_sum_2", bb_sum_2.mass)
+    events = set_ak_column_f32(events, "mli_mbb_dr_sum", bb_dr_sum.mass)
+    events = set_ak_column_f32(events, "mli_mbb_dr_sum_2", bb_dr_sum_2.mass)
+    events = set_ak_column_f32(events, "mli_mbb_remaining", bb_remaining.mass)
+    events = set_ak_column_f32(events, "mli_mbb_dr_max_sum", bb_dr_max_sum.mass)
+    events = set_ak_column_f32(events, "mli_mbb_dr_all_sum", bb_dr_all_sum.mass)
+    events = set_ak_column_f32(events, "mli_hh_dr", hh_dr)
+    events = set_ak_column_f32(events, "mli_dr_h_ll", bb_dr_sum.delta_r(hll))
+
 
     # fill nan/none values of all produced columns
     for col in self.ml_input_columns:
@@ -388,6 +440,10 @@ def dl_ml_inputs_init(self: Producer) -> None:
         # low-level features
         "mli_lep2_pt", "mli_lep2_eta",
         "mli_lep_tag", "mli_lep2_tag", "mli_mixed_channel",
+        # 4b system
+        "mli_mbb_sum", "mli_mbb_sum_2", "mli_mbb_dr_sum",
+        "mli_mbb_dr_sum_2", "mli_mbb_remaining", "mli_mbb_dr_max_sum",
+        "mli_mbb_dr_all_sum", "mli_hh_dr","mli_dr_h_ll",
     }
     self.produces |= self.ml_input_columns
 

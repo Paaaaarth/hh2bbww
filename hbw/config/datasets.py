@@ -74,7 +74,7 @@ def hbw_dataset_names(config: od.Config, as_list: bool = False) -> DotDict[str: 
         # **data_datasets,
         "data": data_datasets,
         "tt": ["tt_sl_powheg", "tt_dl_powheg", "tt_fh_powheg"],
-        "hhh": ["hhh_4b2w_c30_d40_amcatnlo"],
+        "hhh": ["hhh_4b2w_c30_d40_amcatnlo", "hhh_4b2w_c3_minus1_d4_minus1_amcatnlo"],
         "st": [
             # "st_schannel_lep_4f_amcatnlo",
             # "st_schannel_had_4f_amcatnlo",

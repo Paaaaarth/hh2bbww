@@ -254,7 +254,7 @@ def add_variables(config: od.Config) -> None:
             "inputs": {"{Electron,Muon}.{pt,eta,phi,mass,charge}"},
             "rebin": 2,
             "x_max": 400,
-        },
+            },
     )
 
     config.add_variable(
@@ -408,7 +408,7 @@ def add_variables(config: od.Config) -> None:
         name="n_bjet",
         expression=lambda events: ak.num(events.Bjet["pt"], axis=1),
         aux={"inputs": {"Bjet.pt"}},
-        binning=(4, -0.5, 3.5),
+        binning=(7, -0.5, 6.5),
         x_title="Number of bjets",
         discrete_x=True,
     )

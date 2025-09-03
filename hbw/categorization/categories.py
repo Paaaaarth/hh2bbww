@@ -282,6 +282,37 @@ def catid_2b(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, a
     mask = (n_deepjet >= 2)
     return events, mask
 
+@categorizer(uses={BTAG_COLUMN("Jet")})
+def catid_3b(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    btag_column = self.config_inst.x.btag_column
+    btag_wp_score = self.config_inst.x.btag_wp_score
+    n_deepjet = ak.sum(events.Jet[btag_column] >= btag_wp_score, axis=-1)
+    mask = (n_deepjet >= 3)
+    return events, mask
+
+@categorizer(uses={BTAG_COLUMN("Jet")})
+def catid_4b(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    btag_column = self.config_inst.x.btag_column
+    btag_wp_score = self.config_inst.x.btag_wp_score
+    n_deepjet = ak.sum(events.Jet[btag_column] >= btag_wp_score, axis=-1)
+    mask = (n_deepjet >= 4)
+    return events, mask
+
+# @categorizer(uses={BTAG_COLUMN("Jet")})
+# def catid_4b_exact(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+#     btag_column = self.config_inst.x.btag_column
+#     btag_wp_score = self.config_inst.x.btag_wp_score
+#     n_deepjet = ak.sum(events.Jet[btag_column] >= btag_wp_score, axis=-1)
+#     mask = (n_deepjet == 4)
+#     return events, mask
+
+@categorizer(uses={BTAG_COLUMN("Jet")})
+def catid_3b_exact(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    btag_column = self.config_inst.x.btag_column
+    btag_wp_score = self.config_inst.x.btag_wp_score
+    n_deepjet = ak.sum(events.Jet[btag_column] >= btag_wp_score, axis=-1)
+    mask = (n_deepjet == 3)
+    return events, mask
 
 #
 # DNN categorizer

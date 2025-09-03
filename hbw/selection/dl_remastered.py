@@ -303,7 +303,7 @@ def dl1(
 def dl1_init(self: Selector) -> None:
     # defaults
     if self.n_jet is None:
-        self.n_jet = 1
+        self.n_jet = 2
     if self.n_btag is None:
         self.n_btag = 2
 

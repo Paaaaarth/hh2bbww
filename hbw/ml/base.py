@@ -58,7 +58,7 @@ class MLClassifierBase(MLModel):
     # NOTE: we split each fold into train, val, test + do k-folding, so we have a 4-way split in total
     # TODO: test whether setting "test" to 0 is working
     train_val_test_split: tuple = (0.75, 0.15, 0.10)
-    folds: int = 5
+    folds: int = 5 # number of folds for k-fold cross-validation.
 
     # training-specific parameters. Only need to re-run training when changing these
     _default__class_factors: dict = {"st": 1, "tt": 1}
