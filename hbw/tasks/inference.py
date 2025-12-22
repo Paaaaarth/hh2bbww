@@ -122,40 +122,107 @@ def get_cat_proc_syst_names(root_file):
     return cat_names, proc_names, syst_names
 
 
-def get_rebin_values(hist, N_bins_final: int = 10):
+def get_rebin_values(
+        rebin_hist,
+        signal_hist,
+        background_hist,
+        N_bins_final: int = 10,
+        min_bkg_events: int = 10,
+        blinding_threshold: float | None = None,
+):
     """
-    Function that determines how to rebin a hist to *N_bins_final* bins such that
+    Function that determines how to rebin a histogram to *N_bins_final* bins such that
     the resulting histogram is flat
     """
-    N_bins_input = hist.axes[0].size
+    msg = f"Rebinning histogram {rebin_hist.name} to {N_bins_final} bins."
+    if min_bkg_events:
+        msg += f" Requires at least {min_bkg_events} background events per bin."
+    if blinding_threshold:
+        msg += f" Blinding threshold is set to {blinding_threshold}."
+    logger.info(msg)
+    N_bins_input = rebin_hist.axes[0].size
+    if N_bins_input != background_hist.axes[0].size:
+        raise ValueError(
+            f"Input histogram has {N_bins_input} bins, but background "
+            f"histogram has {background_hist.axes[0].size} bins",
+        )
 
     # determine events per bin the final histogram should have
-    events_per_bin = hist.sum().value / N_bins_final
+    events_per_bin = rebin_hist.sum().value / N_bins_final
     logger.info(f"============ {round(events_per_bin, 3)} events per bin")
 
     # bookkeeping number of bins and number of events
     bin_count = 1
     N_events = 0
-    rebin_values = [int(hist.axes[0].edges[0])]
+    N_signal = 0
+    N_bkg_value = N_bkg_variance = 0
 
-    # starting loop at 1 to exclude underflow
-    # ending at N_bins_input + 1 excludes overflow
-    for i in range(1, N_bins_input):
+    x_max = rebin_hist.axes[0].edges[N_bins_input]
+    x_min = rebin_hist.axes[0].edges[0]
+    rebin_values = [x_max]
+
+    h_view = rebin_hist.view()
+    background_view = background_hist.view()
+    signal_view = signal_hist.view()
+
+    max_error = lambda value: value ** 2 / min_bkg_events
+
+    blind_bool_func = lambda value, bkg_value: (
+        value / np.sqrt(value + bkg_value) >= blinding_threshold
+        if blinding_threshold else False
+    )
+
+    # starting at N_bins_input - 1 excludes overflow
+    # ending loop at 0 to exclude underflow
+    # starting at the end to allow checking for empty background bins
+    for i in range(N_bins_input - 1, 0, -1):
         if bin_count == N_bins_final:
             # break as soon as N-1 bin edges have been determined --> final bin is x_max
             break
-        N_events += hist.view()["value"][i]
-        if i % 100 == 0:
-            logger.info(f"========== Bin {i} of {N_bins_input}, {N_events} events")
-        if N_events >= events_per_bin * bin_count:
-            # when *N_events* surpasses threshold, append the corresponding bin edge and count
-            logger.info(f"++++++++++ Append bin edge {bin_count} of {N_bins_final} at edge {hist.axes[0].edges[i]}")
-            rebin_values.append(hist.axes[0].edges[i])
-            bin_count += 1
 
-    # final bin is x_max
-    x_max = hist.axes[0].edges[N_bins_input]
-    rebin_values.append(x_max)
+        N_signal += signal_view["value"][i]
+        N_events += h_view["value"][i]
+        N_bkg_value += background_view["value"][i]
+        N_bkg_variance += background_view["variance"][i]
+        if i % 100 == 0:
+            logger.info(f"//////////// Bin {i} of {N_bins_input}, {N_events} events")
+        if N_events >= events_per_bin:
+            # when *N_events* surpasses threshold, check if background variance is small enough
+            if N_bkg_variance < max_error(N_bkg_value):
+                # when background variance is small enough, append the corresponding bin edge and count
+                this_edge = rebin_hist.axes[0].edges[i]
+                logger.info(
+                    f"++++++++++ Append bin edge {bin_count} of {N_bins_final} at edge "
+                    f"{this_edge}",
+                )
+
+                # recalculate events per bin
+                last_bin_index = rebin_hist.axes[0].index(this_edge)
+                _sum = rebin_hist.values()[:last_bin_index].sum()
+                events_per_bin = _sum / (N_bins_final - bin_count)
+                logger.info(f"============ Continuing with {round(events_per_bin, 3)} events per bin")
+
+                # check if this bin should be blinded
+                should_be_blinded = blind_bool_func(N_signal, N_bkg_value)
+                if should_be_blinded:
+                    logger.warning(f"Blinding condition fulfilled, first bin edge is set to {this_edge}")
+                    rebin_values = []
+
+                # append bin edge and reset event counts
+                rebin_values.append(this_edge)
+                bin_count += 1
+                N_events = N_signal = N_bkg_value = N_bkg_variance = 0
+            else:
+                this_edge = rebin_hist.axes[0].edges[i]
+                logger.warning_once(
+                    f"get_rebin_values_{bin_count}",
+                    f"Background variance {N_bkg_variance} is too large for bin {i} with value {N_bkg_value}, "
+                    f"skipping bin edge {this_edge}",
+                )
+
+    rebin_values.append(x_min)
+    # change order of the bin edges to be ascending
+    rebin_values = rebin_values[::-1]
     logger.info(f"final bin edges: {rebin_values}")
     return rebin_values
 
@@ -368,14 +435,32 @@ class ModifyDatacardsFlatRebin(
             "shapes": self.target(basename(f"shapes_rebin_{n_bins}", "root")),
             "edges": self.target(basename(f"edges_{n_bins}", "json")),
         }
+    
+    def get_background_processes(self):
+        background_processes = [
+            proc for proc in self.branch_data.processes.copy()
+            if not proc.is_signal
+        ]
+        return background_processes
+
+    def get_signal_processes(self):
+        signal_processes = [
+            proc for proc in self.branch_data.processes.copy()
+            if proc.is_signal and (
+                proc.name.startswith("hhh_4b2w2l2nu_c30_d40")
+            )
+        ]
+        return signal_processes
+
 
     def run(self):
 
         inputs = self.input()
+        inputs = inputs["datacards"].targets[self.branch_data.name]
         outputs = self.output()
 
-        inp_shapes = inputs["datacards"]["shapes"]
-        inp_datacard = inputs["datacards"]["card"]
+        inp_shapes = inputs["shapes"]
+        inp_datacard = inputs["card"]
 
         # create a copy of the datacard with modified name of the shape file
         datacard = inp_datacard.load(formatter="text")
@@ -415,9 +500,17 @@ class ModifyDatacardsFlatRebin(
             hist = hists[0]
             for h in hists[1:]:
                 hist += h
+            
+            background_processes = self.get_background_processes()
+            background_hists = [nominal_hists[proc.name] for proc in background_processes]
+            background_hist = sum(background_hists[1:], background_hists[0])
+            signal_processes = self.get_signal_processes()
+            signal_hists = [nominal_hists[proc.name] for proc in signal_processes]
+            signal_hist = sum(signal_hists[1:], signal_hists[0])
+
 
             logger.info(f"Finding rebin values for category {cat_name} using processes {rebin_processes}")
-            rebin_values = get_rebin_values(hist, self.get_n_bins())
+            rebin_values = get_rebin_values(hist, signal_hist, background_hist, self.get_n_bins())
             outputs["edges"].dump(rebin_values, formatter="json")
 
             # apply rebinning on all histograms and store resulting hists in a ROOT file
@@ -485,6 +578,7 @@ class PrepareInferenceTaskCalls(
             "Run": self.target("Run.sh"),
             "PlotUpperLimitsAtPoint": self.target("PlotUpperLimitsAtPoint.txt"),
             "PlotUpperLimits_kl": self.target("PlotUpperLimits_kl.txt"),
+            "PlotUpperLimits_k4": self.target("PlotUpperLimits_k4.txt"),
             "PlotUpperLimits_c2v": self.target("PlotUpperLimits_c2v.txt"),
             "FitDiagnostics": self.target("FitDiagnostics.txt"),
             "PullsAndImpacts": self.target("PullsAndImpacts.txt"),
@@ -526,7 +620,7 @@ class PrepareInferenceTaskCalls(
         # creating upper limits for kl=1
         cmd = (
             f"law run PlotUpperLimitsAtPoint --version {identifier} --campaign {lumi} --multi-datacards {datacards} "
-            f"--datacard-names {identifier}"
+            f"--datacard-names {identifier} --hh-model dhi.models.hh_model_basisV3.model_hhh_ggf@noBRscaling"
         )
         print(base_cmd + cmd, "\n\n")
         full_cmd += cmd + "\n\n"
@@ -535,11 +629,22 @@ class PrepareInferenceTaskCalls(
         # creating kl scan
         cmd = (
             f"law run PlotUpperLimits --version {identifier} --campaign {lumi} --datacards {datacards} "
-            f"--xsec fb --y-log"
+            f"--xsec fb --y-log --hh-model dhi.models.hh_model_basisV3.model_hhh_ggf@noBRscaling --scan-parameters kl,-20,20,20 "
+            f"--show-theory False --workers 10"
         )
         print(base_cmd + cmd, "\n\n")
         full_cmd += cmd + "\n\n"
         output["PlotUpperLimits_kl"].dump(cmd, formatter="text")
+
+        # creating kl scan
+        cmd = (
+            f"law run PlotUpperLimits --version {identifier} --campaign {lumi} --datacards {datacards} "
+            f"--xsec fb --y-log --hh-model dhi.models.hh_model_basisV3.model_hhh_ggf@noBRscaling --scan-parameters k4,-200,200,200 "
+            f"--show-theory False --workers 10"
+        )
+        print(base_cmd + cmd, "\n\n")
+        full_cmd += cmd + "\n\n"
+        output["PlotUpperLimits_k4"].dump(cmd, formatter="text")
 
         # creating C2V scan
         cmd = (

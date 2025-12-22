@@ -3,6 +3,7 @@
 """
 Exemplary reduction methods that can run on-top of columnflow's default reduction.
 """
+import law
 
 from columnflow.reduction import Reducer, reducer
 from columnflow.reduction.default import cf_default
@@ -52,3 +53,93 @@ def default(self: Reducer, events: ak.Array, selection: ak.Array, **kwargs) -> a
         events = self[recoil_corrected_met](events, **kwargs)
 
     return events
+
+@default.init
+def default_init(self: Reducer) -> None:
+    """
+    Initialize the default reducer.
+    """
+    # Add shift dependencies
+    self.shifts |= {
+        shift_inst.name
+        for shift_inst in self.config_inst.shifts
+        if shift_inst.has_tag(("jec", "jer"))
+    }
+
+
+triggersf = default.derive("triggersf")
+
+
+@triggersf.init
+def triggersf_init(self: Reducer) -> None:
+    cfg = self.config_inst
+
+    # prevent multiple initializations
+    flag = f"reducer_init_done_{self.cls_name}"
+    if cfg.has_tag(flag):
+        return
+    cfg.add_tag(flag)
+
+    # add config entries needed already during the reduction
+    # TODO: At some point this should probably time dependent as well
+    cfg.x.dl_orthogonal_trigger = "PFMETNoMu120_PFMHTNoMu120_IDTight"
+    cfg.x.dl_orthogonal_trigger2 = "PFMET120_PFMHT120_IDTight"
+    cfg.x.hlt_L1_seeds = {
+        "PFMETNoMu120_PFMHTNoMu120_IDTight": [
+            "ETMHF90",
+            "ETMHF100",
+            "ETMHF110",
+            "ETMHF120",
+            "ETMHF130",
+            "ETMHF140",
+            "ETMHF150",
+            "ETM150",
+            "ETMHF90_SingleJet60er2p5_dPhi_Min2p1",
+            "ETMHF90_SingleJet60er2p5_dPhi_Min2p6",
+        ],
+        "PFMET120_PFMHT120_IDTight": [
+            "ETMHF90",
+            "ETMHF100",
+            "ETMHF110",
+            "ETMHF120",
+            "ETMHF130",
+            "ETMHF140",
+            "ETMHF150",
+            "ETM150",
+            "ETMHF90_SingleJet60er2p5_dPhi_Min2p1",
+            "ETMHF90_SingleJet60er2p5_dPhi_Min2p6",
+        ],
+    }
+
+    # set default hist producer
+    self.config_inst.x.default_hist_producer = "default"
+
+
+@triggersf.post_init
+def triggersf_post_init(self: Reducer, task: law.Task, **kwargs) -> None:
+    if task.selector_steps:
+        raise Exception("Selector steps are not supported in triggersf reducer")
+
+    # the updates to selector_steps and used columns are only necessary if the task invokes the reducer
+    if not task.invokes_reducer:
+        return
+
+    task.selector_steps = ("all_but_trigger",)
+
+    triggersf_required_columns = {
+        f"HLT.{self.config_inst.x.dl_orthogonal_trigger}",
+        *{
+            f"L1.{seed}"
+            for seed in self.config_inst.x.hlt_L1_seeds[self.config_inst.x.dl_orthogonal_trigger]
+        },
+        f"HLT.{self.config_inst.x.dl_orthogonal_trigger2}",
+        *{
+            f"L1.{seed}"
+            for seed in self.config_inst.x.hlt_L1_seeds[self.config_inst.x.dl_orthogonal_trigger2]
+        },
+    }
+    self.uses.update(triggersf_required_columns)
+    self.produces.update(triggersf_required_columns)
+
+
+triggersffix = triggersf.derive("triggersffix")

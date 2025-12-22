@@ -26,7 +26,7 @@ ak = maybe_import("awkward")
 np = maybe_import("numpy")
 
 # helper
-set_ak_column_f32 = functools.partial(set_ak_column, value_type=np.float32)
+set_ak_column_f32 = functools.partial(set_ak_column, value_type=np.float64)
 
 ZERO_PADDING_VALUE = -10
 
@@ -329,7 +329,7 @@ def sl_ml_inputs_init(self: Producer) -> None:
     uses={common_ml_inputs},
     produces={common_ml_inputs},
     # produced columns set in the init function
-    version=law.config.get_expanded("analysis", "dl_ml_inputs_version", 1),
+    version=law.config.get_expanded("analysis", "dl_ml_inputs_version", 3),
 )
 def dl_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     """
@@ -389,7 +389,7 @@ def dl_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     other_pair = ak.flatten(bb_pairs[idx_remaining], axis=1)
     bb_remaining = other_pair["0"] + other_pair["1"]
 
-    # delta R between two higgs candidates(Sort of...)
+    # delta R between two higgs candidates(h->bb)(Sort of...)
     hh_dr = bb_dr_sum.delta_r(bb_remaining)
 
     # pair with second least delta R
@@ -420,6 +420,43 @@ def dl_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     events = set_ak_column_f32(events, "mli_hh_dr", hh_dr)
     events = set_ak_column_f32(events, "mli_dr_h_ll", bb_dr_sum.delta_r(hll))
 
+    # # Inspired by the paper (https://www.desy.de/f/students/2018/reports/LivVage.pdf)
+    # mbb_pair_sum = (bb_pairs[:, "0"] + bb_pairs[:, "1"]).mass
+    # i = 0
+    # if abs(mbb_pair_sum - 125) < 30:
+    #     i += 1 
+    # events = set_ak_column_f32(events, "mli_nHiggs30", i)
+    
+    # FSP Test variable
+
+    lb = events.Lepton[:, 0] * 1 + events.Bjet[:, 0] * 1
+    lb_pt = events.Lepton[:, 0].pt + events.Bjet[:, 0].pt
+    lb_mass = events.Lepton[:, 0].mass + events.Bjet[:, 0].mass
+
+    events = set_ak_column_f32(events, "mli_lb_indv_pt", lb_pt)
+    events = set_ak_column_f32(events, "mli_lb_pt", lb.pt)
+    events = set_ak_column_f32(events, "mli_lb_mass", lb.mass)
+    events = set_ak_column_f32(events, "mli_lb_indv_mass", lb_mass)
+    events = set_ak_column_f32(events, "mli_lb_pt_2l", (events.Lepton[:, 0] * 2 + events.Bjet[:, 0] * 1).pt)
+    events = set_ak_column_f32(events, "mli_lb_mass_2l", (events.Lepton[:, 0] * 2 + events.Bjet[:, 0] * 1).mass)
+    events = set_ak_column_f32(events, "mli_lb_indv_mass_2l", (events.Lepton[:, 0] * 2).mass + (events.Bjet[:, 0] * 1).mass)
+    events = set_ak_column_f32(events, "mli_lb_indv_pt_2l", (events.Lepton[:, 0] * 2).pt + (events.Bjet[:, 0] * 1).pt)
+
+    # General Test variables
+
+    # lb_pairs = [[events.Lepton[:, 0], other_pair["0"]], [events.Lepton[:, 0], other_pair["1"]],
+    #             [events.Lepton[:, 1], other_pair["0"]], [events.Lepton[:, 1], other_pair["1"]]]
+    # lb_0 = events.Lepton[:, 0].delta_r(other_pair["0"])
+    # lb_1 = events.Lepton[:, 0].delta_r(other_pair["1"])
+    # lb_2 = events.Lepton[:, 1].delta_r(other_pair["0"])
+    # lb_3 = events.Lepton[:, 1].delta_r(other_pair["1"])
+    # from hbw.util import debugger; debugger()
+    events = set_ak_column_f32(events, "mli_lb_top", ((events.Lepton[:, 0] * 1)+ (other_pair["0"] * 1)).mass)
+    events = set_ak_column_f32(events, "mli_lb_top_indv", ((events.Lepton[:, 0] * 1).mass)+ ((other_pair["0"] * 1).mass))
+    events = set_ak_column_f32(events, "mli_lb_top_indv_2l", ((events.Lepton[:, 0] * 2).mass)+ ((other_pair["0"] * 1).mass))
+    events = set_ak_column_f32(events, "mli_lb_top_2l", ((events.Lepton[:, 0] * 2)+ (other_pair["0"] * 1)).mass)
+    events = set_ak_column_f32(events, "mli_lb_top_indv_2b", ((events.Lepton[:, 0] * 1).mass)+ ((other_pair["0"] * 2).mass))
+    events = set_ak_column_f32(events, "mli_lb_top_2b", ((events.Lepton[:, 0] * 1)+ (other_pair["0"] * 2)).mass)   
 
     # fill nan/none values of all produced columns
     for col in self.ml_input_columns:
@@ -444,6 +481,11 @@ def dl_ml_inputs_init(self: Producer) -> None:
         "mli_mbb_sum", "mli_mbb_sum_2", "mli_mbb_dr_sum",
         "mli_mbb_dr_sum_2", "mli_mbb_remaining", "mli_mbb_dr_max_sum",
         "mli_mbb_dr_all_sum", "mli_hh_dr","mli_dr_h_ll",
+        # test
+        "mli_lb_indv_pt", "mli_lb_pt", "mli_lb_indv_mass",
+        "mli_lb_mass", "mli_lb_pt_2l", "mli_lb_mass_2l", "mli_lb_indv_pt_2l", "mli_lb_indv_mass_2l",
+        "mli_lb_top", "mli_lb_top_indv", "mli_lb_top_2l", "mli_lb_top_indv_2l",
+        "mli_lb_top_2b", "mli_lb_top_indv_2b",
     }
     self.produces |= self.ml_input_columns
 

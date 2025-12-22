@@ -80,6 +80,12 @@ processes_per_pdf_rate = {
     "Higgs_ttHH": ["tthh"],
 }
 
+processes_per_rate_unconstrained = {
+    "tt": ["tt"],
+    "st": ["st_schannel", "st_tchannel", "st_twchannel"],
+    "dy": ["dy", "dy_lf", "dy_hf"],
+}
+
 # mapping for each shape uncertainty, which process is used.
 # If "all" is included, takes all processes except for the ones specified (starting with !)
 processes_per_shape = {

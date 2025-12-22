@@ -171,7 +171,105 @@ def add_common_ml_variables(config: od.Config) -> None:
         name="mli_dr_h_ll",
         expression="mli_dr_h_ll",
         binning=(40, 0, 8),
-        x_title=r"$\Delta R(h,h)$",
+        x_title=r"$\Delta R(h,ll)$",
+    )
+    config.add_variable(
+        name="mli_lb_indv_pt",
+        expression="mli_lb_indv_pt",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$p_{T}^{l}+p_{T}^{b}$",
+    )
+    config.add_variable(
+        name="mli_lb_pt",
+        expression="mli_lb_pt",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$p_{T}^{lb}$",
+    )
+    config.add_variable(
+        name="mli_lb_indv_mass",
+        expression="mli_lb_indv_mass",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$m_{lb}$",
+    )
+    config.add_variable(
+        name="mli_lb_mass",
+        expression="mli_lb_mass",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$m_{lb}$",
+    )
+    config.add_variable(
+        name="mli_lb_pt_2l",
+        expression="mli_lb_pt_2l",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$p_{T}^{b}+2 \times p_{T}^{l}$",
+    )
+    config.add_variable(
+        name="mli_lb_mass_2l",
+        expression="mli_lb_mass_2l",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$m_{b+2l}$",
+    )
+    config.add_variable(
+        name="mli_lb_indv_mass_2l",
+        expression="mli_lb_indv_mass_2l",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$m_{b}+2 \times m_{l}$",
+    )
+    config.add_variable(
+        name="mli_lb_indv_pt_2l",
+        expression="mli_lb_indv_pt_2l",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$p_{T}^{b}+2 \times p_{T}^{l}$",
+    )
+    config.add_variable(
+        name="mli_lb_top",
+        expression="mli_lb_top",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$m_{lb}^{top}$",
+    )
+    config.add_variable(
+        name="mli_lb_top_indv",
+        expression="mli_lb_top_indv",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$m_{l}^{top}+m_{b}^{top}$",
+    )
+    config.add_variable(
+        name="mli_lb_top_2l",
+        expression="mli_lb_top_2l",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$m_{b+2l}^{top}$",
+    )
+    config.add_variable(
+        name="mli_lb_top_indv_2l",
+        expression="mli_lb_top_indv_2l",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$m_{b}^{top}+2 \times m_{l}^{top}$",
+    )
+    config.add_variable(
+        name="mli_lb_top_2b",
+        expression="mli_lb_top_2b",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$m_{2b+l}^{top}$",
+    )
+    config.add_variable(
+        name="mli_lb_top_indv_2b",
+        expression="mli_lb_top_indv_2b",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$2 \times m_{b}^{top}+m_{l}^{top}$",
     )
 
     # vbf features for central jets and incljets

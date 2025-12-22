@@ -23,7 +23,7 @@ logger = law.logger.get_logger(__name__)
 @producer(
     # uses in init, produces should not be empty
     produces={"category_ids"},
-    version=3,
+    version=10,
 )
 def pre_ml_cats(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     """
@@ -56,7 +56,7 @@ def cats_ml(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     automatically adds `MLEvaluation` to the requirements.
     """
     max_score = ak.fill_none(ak.max([events.mlscore[f] for f in events.mlscore.fields], axis=0), 0)
-    events = set_ak_column(events, "mlscore.max_score", max_score, value_type=np.float32)
+    events = set_ak_column(events, "mlscore.max_score", max_score, value_type=np.float64)
     # category ids
     events = self[category_ids](events, **kwargs)
 

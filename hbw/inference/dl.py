@@ -13,33 +13,25 @@ from hbw.inference.base import HBWInferenceModelBase
 #
 
 # used to set default requirements for cf.CreateDatacards based on the config
-ml_model_name = "dl_22post_benchmark"
+ml_model_name = "dl_22post_first"
 
 # All processes to be included in the final datacard
 processes = [
-    "hh_vbf_hbb_hww2l2nu_kv1p74_k2v1p37_kl14p4",
-    "hh_vbf_hbb_hww2l2nu_kvm0p758_k2v1p44_klm19p3",
-    "hh_vbf_hbb_hww2l2nu_kvm0p012_k2v0p03_kl10p2",
-    "hh_vbf_hbb_hww2l2nu_kvm2p12_k2v3p87_klm5p96",
-    "hh_vbf_hbb_hww2l2nu_kv1_k2v1_kl1",
-    "hh_vbf_hbb_hww2l2nu_kv1_k2v0_kl1",
-    "hh_vbf_hbb_hww2l2nu_kvm0p962_k2v0p959_klm1p43",
-    "hh_vbf_hbb_hww2l2nu_kvm1p21_k2v1p94_klm0p94",
-    "hh_vbf_hbb_hww2l2nu_kvm1p6_k2v2p72_klm1p36",
-    "hh_vbf_hbb_hww2l2nu_kvm1p83_k2v3p57_klm3p39",
-    "hh_ggf_hbb_hww2l2nu_kl0_kt1",
-    "hh_ggf_hbb_hww2l2nu_kl1_kt1",
-    "hh_ggf_hbb_hww2l2nu_kl2p45_kt1",
-    "hh_ggf_hbb_hww2l2nu_kl5_kt1",
+    # Add signal processes here
+    "hhh_4b2w2l2nu_c30_d40",
+    "hhh_4b2w2l2nu_c30_d499", "hhh_4b2w2l2nu_c30_d4m1",
+    "hhh_4b2w2l2nu_c319_d419", "hhh_4b2w2l2nu_c31_d40", "hhh_4b2w2l2nu_c31_d42",
+    "hhh_4b2w2l2nu_c32_d4m1", "hhh_4b2w2l2nu_c34_d49", "hhh_4b2w2l2nu_c3m1_d40",
+    "hhh_4b2w2l2nu_c3m1_d4m1", "hhh_4b2w2l2nu_c3m1p5_d4m0p5",
     # TODO: merge st_schannel, st_tchannel
-    "st_tchannel",
+    # "st_tchannel", # Negative rate in some categories
     "st_twchannel",
     # "st_schannel",  # Not datasets anyways
     "tt",
     # "ttw",  # TODO: dataset not working?
     "ttz",
     "dy",
-    "w_lnu",
+    # "w_lnu", # Zero rate in most categories
     "vv",
     "h_ggf", "h_vbf", "zh", "wh", "zh_gg", "tth",
     # "ttv",  # TODO
@@ -51,18 +43,21 @@ processes = [
 
 # All categories to be included in the final datacard
 config_categories = [
-    "sr__1b__ml_sig_ggf",
-    "sr__1b__ml_sig_vbf",
-    "sr__1b__ml_tt",
-    "sr__1b__ml_st",
-    "sr__1b__ml_dy",
-    "sr__1b__ml_h",
-    "sr__2b__ml_sig_ggf",
-    "sr__2b__ml_sig_vbf",
-    "sr__2b__ml_tt",
-    "sr__2b__ml_st",
-    "sr__2b__ml_dy",
-    "sr__2b__ml_h",
+    "sr_2b_exact_ml_sig_all",
+    "sr_2b_exact_ml_dy",
+    "sr_2b_exact_ml_tt",
+    "sr_2b_exact_ml_st",
+    "sr_2b_exact_ml_h",
+    "sr_3b_exact_ml_sig_all",
+    "sr_3b_exact_ml_dy",
+    "sr_3b_exact_ml_tt",
+    "sr_3b_exact_ml_st",
+    "sr_3b_exact_ml_h",
+    "sr_4b_ml_sig_all",
+    "sr_4b_ml_dy",
+    "sr_4b_ml_tt",
+    "sr_4b_ml_st",
+    "sr_4b_ml_h",
 ]
 
 rate_systematics = [
@@ -137,8 +132,13 @@ shape_systematics = [
     "top_pt",
 ]
 
+ff_background = [
+    "rate_tt",
+    "rate_st",
+]
+
 # All systematics to be included in the final datacard
-systematics = rate_systematics + shape_systematics
+systematics = rate_systematics + shape_systematics + ff_background
 
 default_cls_dict = {
     "ml_model_name": ml_model_name,
@@ -211,40 +211,21 @@ dl_syst = dl.derive("dl_syst", cls_dict={"systematics": systematics})
 # TODO: remove since outdated model
 dl_binary = dl.derive("dl_binary", cls_dict={
     "ml_model_name": ["dl_22post_benchmark", "dl_22post_binary_test2"],
-    "config_variable": lambda self, config_cat_inst: "logit_mlscore.sig_ggf_binary",
+    "config_variable": lambda self, config_cat_inst: "logit_mlscore.sig_binary",
     "systematics": rate_systematics,
 })
 
-
-previous = dl.derive("previous", cls_dict={
-    "ml_model_name": ["dl_22post_previous_merge_hh"],
-    "systematics": rate_systematics,
+dl_22pre = dl.derive("dl_22pre", cls_dict={
+    "ml_model_name": ["dl_22pre_first"],
 })
-previous_and_binary = dl.derive("previous_and_binary", cls_dict={
-    "ml_model_name": ["dl_22post_previous_merge_hh", "dl_22post_binary_test3"],
-    "config_variable": lambda self, config_cat_inst: "logit_mlscore.sig_ggf_binary",
-    "systematics": rate_systematics,
+dl_22post_multi_binary = dl.derive("dl_22post_multi_binary", cls_dict={
+    "ml_model_name": ["dl_22post_first", "dl_22post_binary"],
+    "config_variable": lambda self, config_cat_inst: "logit_mlscore.sig_binary",
 })
-# TODO: change config variable to use the correct scores per category
-benchmark = dl.derive("benchmark", cls_dict={
-    "ml_model_name": ["dl_22post_benchmark_v3", "dl_22post_binary_test3"],
-    "config_variable": lambda self, config_cat_inst: "logit_mlscore.sig_ggf_binary",
-    "systematics": rate_systematics,
-})
-hh_multi_dataset = dl.derive("hh_multi_dataset", cls_dict={
-    "ml_model_name": ["dl_22post_previous"],
-    "systematics": rate_systematics,
-})
-hh_multi_dataset_and_binary = dl.derive("hh_multi_dataset_and_binary", cls_dict={
-    "ml_model_name": ["dl_22post_previous", "dl_22post_binary_test3"],
-    "config_variable": lambda self, config_cat_inst: "logit_mlscore.sig_ggf_binary",
-    "systematics": rate_systematics,
-})
-
-with_vbf_binary = dl.derive("with_vbf_binary", cls_dict={
-    "ml_model_name": ["dl_22post_previous", "dl_22post_binary_test3", "dl_22post_vbf"],
-    "config_variable": config_variable_binary_ggf_and_vbf,
-    "systematics": rate_systematics,
+dl_22post_multi_binary_sm = dl.derive("dl_22post_multi_binary_sm", cls_dict={
+    "ml_model_name": ["dl_22post_first", "dl_22post_binary_sm"],
+    "config_variable": lambda self, config_cat_inst: "logit_mlscore.sig_binary",
+    "systematics": systematics,
 })
 
 weight1 = dl.derive("weight1", cls_dict={
@@ -255,7 +236,4 @@ weight1 = dl.derive("weight1", cls_dict={
 
 weight1_hww = weight1.derive("weight1_hww", cls_dict={
     "processes": processes_dict["hww"],
-})
-weight1_hwwzztt = weight1.derive("weight1_hwwzztt", cls_dict={
-    "processes": processes_dict["hwwzztt"],
 })

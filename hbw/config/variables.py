@@ -80,31 +80,6 @@ def add_variables(config: od.Config) -> None:
     """
 
     add_debug_variable(config)
-    # from columnflow.columnar_util import set_ak_column
-
-    # def with_behavior(custom_expression: callable) -> callable:
-    #     def expression(events):
-    #         from hbw.production.prepare_objects import custom_collections
-    #         from columnflow.production.util import attach_coffea_behavior
-    #         events = attach_coffea_behavior.call_func(None, events, collections=custom_collections)
-
-    #         # add Lepton collection if possible
-    #         if "Lepton" not in events.fields and "Electron" in events.fields and "Muon" in events.fields:
-    #             lepton = ak.concatenate([events.Muon * 1, events.Electron * 1], axis=-1)
-    #             events = set_ak_column(events, "Lepton", lepton[ak.argsort(lepton.pt, ascending=False)])
-
-    #         return custom_expression(events)
-
-    #     return expression
-
-    # config.add_variable(
-    #     name="mll_test",
-    #     expression=lambda events: (events.Lepton[:, 0] + events.Lepton[:, 1]).mass,
-    #     binning=(40, 0., 200.),
-    #     unit="GeV",
-    #     x_title=r"$m_{ll}$",
-    #     aux={"inputs": {"{Electron,Muon}.{pt,eta,phi,mass}"}},
-    # )
 
     # (the "event", "run" and "lumi" variables are required for some cutflow plotting task,
     # and also correspond to the minimal set of columns that coffea's nano scheme requires)
@@ -927,3 +902,37 @@ def add_variables(config: od.Config) -> None:
         binning=(40, -3.2, 3.2),
         x_title=r"{met_name} $\phi$".format(met_name=met_name),
     )
+
+    # for gp in ["h1", "h2", "b1", "b2", "sec1", "sec2"]:
+    #     config.add_variable(
+    #         name=f"gen_{gp}_pt",
+    #         expression=f"gen_hbw_decay.{gp}.pt",
+    #         binning=(40, 0., 1000.),
+    #         unit="GeV",
+    #         x_title=r"$p_{T, %s}^{gen}$" % (gp),
+    #         aux={"overflow": True},
+    #     )
+    #     config.add_variable(
+    #         name=f"gen_{gp}_mass",
+    #         expression=f"gen_hbw_decay.{gp}.mass",
+    #         binning=(40, 0., 1000.),
+    #         unit="GeV",
+    #         x_title=r"$m_{%s}^{gen}$" % (gp),
+    #         aux={"overflow": True},
+    #     )
+    #     config.add_variable(
+    #         name=f"gen_{gp}_eta",
+    #         expression=f"gen_hbw_decay.{gp}.eta",
+    #         binning=(40, -6., 6.),
+    #         unit="GeV",
+    #         x_title=r"$\eta_{%s}^{gen}$" % (gp),
+    #         aux={"overflow": True},
+    #     )
+    #     config.add_variable(
+    #         name=f"gen_{gp}_phi",
+    #         expression=f"gen_hbw_decay.{gp}.phi",
+    #         binning=(40, -4, 4),
+    #         unit="GeV",
+    #         aux={"overflow": True},
+    #         x_title=r"$\phi_{%s}^{gen}$" % (gp),
+    #     )

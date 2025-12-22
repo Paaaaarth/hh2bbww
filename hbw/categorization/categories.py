@@ -246,22 +246,24 @@ def catid_resolved(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Ar
 
 
 @categorizer(uses={"Jet.pt"})
-def catid_njet1(
-    self: Categorizer, events: ak.Array, results: SelectionResult | None = None, **kwargs,
+def catid_njet2_exact(
+    self: Categorizer, events: ak.Array, **kwargs,
 ) -> tuple[ak.Array, ak.Array]:
-    if results:
-        return events, results.steps.nJet1
-    mask = ak.num(events.Jet.pt, axis=-1) >= 1
+    mask = ak.sum(events.Jet["pt"] > 0, axis=-1) == 2
     return events, mask
 
+@categorizer(uses={"Jet.pt"})
+def catid_njet3_exact(
+    self: Categorizer, events: ak.Array, **kwargs,
+) -> tuple[ak.Array, ak.Array]:
+    mask = ak.sum(events.Jet["pt"] > 0, axis=-1) == 3
+    return events, mask
 
 @categorizer(uses={"Jet.pt"})
-def catid_njet3(
-    self: Categorizer, events: ak.Array, results: SelectionResult | None = None, **kwargs,
+def catid_njet4(
+    self: Categorizer, events: ak.Array, **kwargs,
 ) -> tuple[ak.Array, ak.Array]:
-    if results:
-        return events, results.steps.nJet3
-    mask = ak.num(events.Jet.pt, axis=-1) >= 3
+    mask = ak.sum(events.Jet["pt"] > 0, axis=-1) >= 4
     return events, mask
 
 
@@ -298,13 +300,14 @@ def catid_4b(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, a
     mask = (n_deepjet >= 4)
     return events, mask
 
-# @categorizer(uses={BTAG_COLUMN("Jet")})
-# def catid_4b_exact(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-#     btag_column = self.config_inst.x.btag_column
-#     btag_wp_score = self.config_inst.x.btag_wp_score
-#     n_deepjet = ak.sum(events.Jet[btag_column] >= btag_wp_score, axis=-1)
-#     mask = (n_deepjet == 4)
-#     return events, mask
+
+@categorizer(uses={BTAG_COLUMN("Jet")})
+def catid_2b_exact(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    btag_column = self.config_inst.x.btag_column
+    btag_wp_score = self.config_inst.x.btag_wp_score
+    n_deepjet = ak.sum(events.Jet[btag_column] >= btag_wp_score, axis=-1)
+    mask = (n_deepjet == 2)
+    return events, mask
 
 @categorizer(uses={BTAG_COLUMN("Jet")})
 def catid_3b_exact(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
@@ -328,7 +331,7 @@ ml_processes = [
     "tt", "st", "w_lnu", "dy", "v_lep", "h",
     "dy_m50toinf", "tt_dl", "st_tchannel_t",
     "bkg_binary", "sig_ggf_binary", "sig_vbf_binary",
-    "sig_ggf", "sig_vbf",
+    "sig_ggf", "sig_vbf", "sig_all",
 ]
 for proc in ml_processes:
     @categorizer(

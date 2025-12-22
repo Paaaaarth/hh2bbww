@@ -200,7 +200,7 @@ class HBWInferenceModelBase(InferenceModel):
                     self.add_process(
                         self.inf_proc(missing_proc),
                         config_process=self.inf_proc(proc),
-                        is_signal=("hh_" in proc.lower()),
+                        is_signal=("hhh_" in proc.lower()),
                         config_mc_datasets=datasets,
                     )
 
@@ -214,7 +214,7 @@ class HBWInferenceModelBase(InferenceModel):
                     self.add_process(
                         self.inf_proc(missing_proc),
                         config_process=proc,
-                        is_signal=("hh_" in proc.lower()),
+                        is_signal=("hhh_" in proc.lower()),
                         config_mc_datasets=datasets,
                     )
 
@@ -252,8 +252,9 @@ class HBWInferenceModelBase(InferenceModel):
                     )
                     for config_inst in self.config_insts
                 },
-                is_signal=("hh_" in proc.lower()),
+                is_signal=("hhh_" in proc.lower()),
                 # is_dynamic=??,
+                scale = 100 if proc.startswith("hhh_") else 1,
             )
 
             # add dummy variations if requested
@@ -268,80 +269,81 @@ class HBWInferenceModelBase(InferenceModel):
         self.add_parameter_group("theory")
 
         # add rate + shape parameters to the inference model
-        self.add_rate_parameters()
+        # self.add_rate_parameters()
         self.add_shape_parameters()
+        self.add_xsec_rate_parameters()
 
         # TODO: check that all requested systematics are in final MLModel?
 
-    def add_rate_parameters(self: InferenceModel):
-        """
-        Function that adds all rate parameters to the inference model
-        """
-        ecm = self.config_inst.campaign.ecm
+    # def add_rate_parameters(self: InferenceModel):
+    #     """
+    #     Function that adds all rate parameters to the inference model
+    #     """
+    #     ecm = self.config_inst.campaign.ecm
 
-        # lumi
-        lumi = self.config_inst.x.luminosity
-        for unc_name in lumi.uncertainties:
-            if unc_name not in self.systematics:
-                continue
+    #     # lumi
+    #     lumi = self.config_inst.x.luminosity
+    #     for unc_name in lumi.uncertainties:
+    #         if unc_name not in self.systematics:
+    #             continue
 
-            self.add_parameter(
-                unc_name,
-                type=ParameterType.rate_gauss,
-                effect=lumi.get(names=unc_name, direction=("down", "up"), factor=True),
-                transformations=[ParameterTransformation.symmetrize],
-            )
+    #         self.add_parameter(
+    #             unc_name,
+    #             type=ParameterType.rate_gauss,
+    #             effect=lumi.get(names=unc_name, direction=("down", "up"), factor=True),
+    #             transformations=[ParameterTransformation.symmetrize],
+    #         )
 
-        # add QCD scale (rate) uncertainties to inference model
-        # TODO: combine scale and mtop uncertainties for specific processes?
-        # TODO: some scale/pdf uncertainties should be rounded to 3 digits, others to 4 digits
-        # NOTE: it might be easier to just take the recommended uncertainty values from HH conventions at
-        #       https://gitlab.cern.ch/hh/naming-conventions instead of taking the values from CMSDB
-        for k, procs in const.processes_per_QCDScale.items():
-            syst_name = f"QCDScale_{k}"
-            if syst_name not in self.systematics:
-                continue
+    #     # add QCD scale (rate) uncertainties to inference model
+    #     # TODO: combine scale and mtop uncertainties for specific processes?
+    #     # TODO: some scale/pdf uncertainties should be rounded to 3 digits, others to 4 digits
+    #     # NOTE: it might be easier to just take the recommended uncertainty values from HH conventions at
+    #     #       https://gitlab.cern.ch/hh/naming-conventions instead of taking the values from CMSDB
+    #     for k, procs in const.processes_per_QCDScale.items():
+    #         syst_name = f"QCDScale_{k}"
+    #         if syst_name not in self.systematics:
+    #             continue
 
-            for proc in procs:
-                if proc not in self.processes:
-                    continue
-                process_inst = self.config_inst.get_process(proc)
-                if "scale" not in process_inst.xsecs[ecm]:
-                    continue
-                self.add_parameter(
-                    syst_name,
-                    process=self.inf_proc(proc),
-                    type=ParameterType.rate_gauss,
-                    effect=tuple(map(
-                        lambda f: round(f, 3),
-                        process_inst.xsecs[ecm].get(names=("scale"), direction=("down", "up"), factor=True),
-                    )),
-                )
-            self.add_parameter_to_group(syst_name, "theory")
+    #         for proc in procs:
+    #             if proc not in self.processes:
+    #                 continue
+    #             process_inst = self.config_inst.get_process(proc)
+    #             if "scale" not in process_inst.xsecs[ecm]:
+    #                 continue
+    #             self.add_parameter(
+    #                 syst_name,
+    #                 process=self.inf_proc(proc),
+    #                 type=ParameterType.rate_gauss,
+    #                 effect=tuple(map(
+    #                     lambda f: round(f, 3),
+    #                     process_inst.xsecs[ecm].get(names=("scale"), direction=("down", "up"), factor=True),
+    #                 )),
+    #             )
+    #         self.add_parameter_to_group(syst_name, "theory")
 
-        # add PDF rate uncertainties to inference model
-        for k, procs in const.processes_per_pdf_rate.items():
-            syst_name = f"pdf_{k}"
-            if syst_name not in self.systematics:
-                continue
+    #     # add PDF rate uncertainties to inference model
+    #     for k, procs in const.processes_per_pdf_rate.items():
+    #         syst_name = f"pdf_{k}"
+    #         if syst_name not in self.systematics:
+    #             continue
 
-            for proc in procs:
-                if proc not in self.processes:
-                    continue
-                process_inst = self.config_inst.get_process(proc)
-                if "pdf" not in process_inst.xsecs[ecm]:
-                    continue
+    #         for proc in procs:
+    #             if proc not in self.processes:
+    #                 continue
+    #             process_inst = self.config_inst.get_process(proc)
+    #             if "pdf" not in process_inst.xsecs[ecm]:
+    #                 continue
 
-                self.add_parameter(
-                    f"pdf_{k}",
-                    process=self.inf_proc(proc),
-                    type=ParameterType.rate_gauss,
-                    effect=tuple(map(
-                        lambda f: round(f, 3),
-                        process_inst.xsecs[ecm].get(names=("pdf"), direction=("down", "up"), factor=True),
-                    )),
-                )
-            self.add_parameter_to_group(syst_name, "theory")
+    #             self.add_parameter(
+    #                 f"pdf_{k}",
+    #                 process=self.inf_proc(proc),
+    #                 type=ParameterType.rate_gauss,
+    #                 effect=tuple(map(
+    #                     lambda f: round(f, 3),
+    #                     process_inst.xsecs[ecm].get(names=("pdf"), direction=("down", "up"), factor=True),
+    #                 )),
+    #             )
+    #         self.add_parameter_to_group(syst_name, "theory")
 
     def add_shape_parameters(self: InferenceModel):
         """
@@ -374,3 +376,121 @@ class HBWInferenceModelBase(InferenceModel):
                 self.add_parameter_to_group(shape_uncertainty, "theory")
             else:
                 self.add_parameter_to_group(shape_uncertainty, "experiment")
+    
+    def add_xsec_rate_parameters(self: InferenceModel):
+        # assuming campaign independent rate uncertainties
+        # -> use the first config instance to get the campaign
+        # NOTE: this might get tricky when including Run-2 (different ecm)
+        config_inst = self.config_insts[0]
+
+        # lumi
+        lumi = self.config_inst.x.luminosity
+        for unc_name in lumi.uncertainties:
+            if unc_name not in self.systematics:
+                continue
+
+            self.add_parameter(
+                unc_name,
+                type=ParameterType.rate_gauss,
+                effect=lumi.get(names=unc_name, direction=("down", "up"), factor=True),
+                transformations=[ParameterTransformation.symmetrize],
+            )
+
+        proc_handled_by_unconstrained_rate = set()
+        for syst_name, procs in const.processes_per_rate_unconstrained.items():
+            # if syst_name not in self.systematics:
+            #     continue
+
+            param_kwargs = {
+                "type": ParameterType.rate_unconstrained,
+                "effect": ["1", "[0,2]"],
+            }
+
+            for proc in procs:
+                if proc not in self.processes:
+                    continue
+                process_inst = self.config_inst.get_process(proc)
+                self.add_parameter(
+                    syst_name,
+                    process=self.inf_proc(proc),
+                    **param_kwargs,
+                )
+                proc_handled_by_unconstrained_rate.add(proc)
+
+        # add QCD scale (rate) uncertainties to inference model
+        # TODO: combine scale and mtop uncertainties for specific processes?
+        # TODO: some scale/pdf uncertainties should be rounded to 3 digits, others to 4 digits
+        # NOTE: it might be easier to just take the recommended uncertainty values from HH conventions at
+        #       https://gitlab.cern.ch/hh/naming-conventions instead of taking the values from CMSDB
+        for syst_name, procs in const.processes_per_QCDScale.items():
+            for proc in procs:
+                if proc not in self.processes:
+                    continue
+                elif proc in proc_handled_by_unconstrained_rate:
+                    logger.info(
+                        f"Process {proc} is already handled by rate_unconstrained. Skipping "
+                        f"{syst_name} for process {proc}.")
+                    continue
+                process_inst = self.config_inst.get_process(proc)
+
+                scale_key = None
+                ecm = self.config_inst.campaign.ecm
+                if "scale" in process_inst.xsecs[ecm]:
+                    scale_key = "scale"
+                elif "scale" in process_inst.xsecs[13]:
+                    scale_key = "scale"
+                    ecm = 13
+                    logger.info(f"Using 13 TeV scale uncertainty for process {proc}, systematic {syst_name}.")
+                elif "th" in process_inst.xsecs[ecm]:
+                    logger.info(f"Using 'th' key for process {proc}, systematic {syst_name}.")
+                    scale_key = "th"
+                else:
+                    logger.warning(f"No scale uncertainty found for process {proc}. Skipping {syst_name}.")
+                    continue
+                self.add_parameter(
+                    syst_name,
+                    process=self.inf_proc(proc),
+                    type=ParameterType.rate_gauss,
+                    effect=tuple(map(
+                        lambda f: round(f, 3),
+                        process_inst.xsecs[ecm].get(names=(scale_key,), direction=("down", "up"), factor=True),
+                    )),
+                )
+            self.add_parameter_to_group(syst_name, "theory")
+
+        # add PDF rate uncertainties to inference model
+        for syst_name, procs in const.processes_per_pdf_rate.items():
+            # syst_name = f"pdf_{k}"
+            # if syst_name not in self.systematics:
+            #     continue
+
+            for proc in procs:
+                if proc not in self.processes:
+                    continue
+                elif proc in proc_handled_by_unconstrained_rate:
+                    logger.info(
+                        f"Process {proc} is already handled by rate_unconstrained. Skipping "
+                        f"{syst_name} for process {proc}.")
+                    continue
+                process_inst = self.config_inst.get_process(proc)
+                ecm = self.config_inst.campaign.ecm
+                if "pdf" in process_inst.xsecs[ecm]:
+                    pdf_key = "pdf"
+                elif "pdf" in process_inst.xsecs[13]:
+                    pdf_key = "pdf"
+                    ecm = 13
+                    logger.info(f"Using 13 TeV pdf uncertainty for process {proc}, systematic {syst_name}.")
+                else:
+                    logger.warning(f"No pdf uncertainty found for process {proc}. Skipping {syst_name}.")
+                    continue
+
+                self.add_parameter(
+                    syst_name,
+                    process=self.inf_proc(proc),
+                    type=ParameterType.rate_gauss,
+                    effect=tuple(map(
+                        lambda f: round(f, 4),
+                        process_inst.xsecs[ecm].get(names=(pdf_key), direction=("down", "up"), factor=True),
+                    )),
+                )
+            self.add_parameter_to_group(syst_name, "theory")

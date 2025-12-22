@@ -34,7 +34,7 @@ def dataset_normalization_weight(self: Producer, events: ak.Array, **kwargs) -> 
 
     # compute the weight and store it
     norm_weight = events.mc_weight * lumi * self.xs / self.sum_weights
-    events = set_ak_column(events, "dataset_normalization_weight", norm_weight, value_type=np.float32)
+    events = set_ak_column(events, "dataset_normalization_weight", norm_weight, value_type=np.float64)
 
     return events
 

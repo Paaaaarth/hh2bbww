@@ -86,7 +86,17 @@ default_process_colors = {
     "vv": color_palette["blue"],
     "other": color_palette["grey"],
     "hh_ggf_hbb_htt": color_palette["grey"],
-    "hhh": color_palette["orange"],
+    "hhh_4b2w2l2nu_c30_d40": color_palette["black"],
+    "hhh_4b2w2l2nu_c30_d499": color_palette["blue"], 
+    "hhh_4b2w2l2nu_c30_d4m1": color_palette["yellow"],
+    "hhh_4b2w2l2nu_c319_d419": color_palette["red"], 
+    "hhh_4b2w2l2nu_c31_d40": color_palette["grey"], 
+    "hhh_4b2w2l2nu_c31_d42": color_palette["purple"],
+    "hhh_4b2w2l2nu_c32_d4m1": color_palette["brown"], 
+    "hhh_4b2w2l2nu_c34_d49": color_palette["orange"], 
+    "hhh_4b2w2l2nu_c3m1_d40": color_palette["green"],
+    "hhh_4b2w2l2nu_c3m1_d4m1": color_palette["darkgrey"],
+    "hhh_4b2w2l2nu_c3m1p5_d4m0p5": color_palette["turqoise"],
 }
 
 for decay in ("", "qqlnu", "2l2nu"):
@@ -160,7 +170,6 @@ short_labels = {
     "hh_ggf_hbb_hvv2l2nu_kl1_kt1": r"$HH_{ggf}^{\kappa\lambda=1}$ (DL)",
     "hh_ggf_hbb_hvv2l2nu_kl2p45_kt1": r"$HH_{ggf}^{\kappa\lambda=2.45}$ (DL)",
     "hh_ggf_hbb_hvv2l2nu_kl5_kt1": r"$HH_{ggf}^{\kappa\lambda=5}$ (DL)",
-    "hh_vbf_hbb_hvvqqlnu_kv1_k2v1_kl1": r"$HH_{vbf}^{1,1,1} (SL)$",
     "hh_vbf_hbb_hvvqqlnu_kv1_k2v1_kl0": r"$HH_{vbf}^{1,1,0} (SL)$",
     "hh_vbf_hbb_hvvqqlnu_kv1_k2v1_kl2": r"$HH_{vbf}^{1,1,2} (SL)$",
     "hh_vbf_hbb_hvvqqlnu_kv1_k2v0_kl1": r"$HH_{vbf}^{1,0,1} (SL)$",
@@ -178,6 +187,17 @@ short_labels = {
     "dy": r"$Z \rightarrow ll$",
     "qcd_mu": r"$QCD \mu$",
     "qcd_ele": r"$QCD e$",
+    "hhh_4b2w2l2nu_c30_d40": r"$HHH_{ggf}^{0,0} (DL)$",
+    "hhh_4b2w2l2nu_c30_d499": r"$HHH_{ggf}^{0,99} (DL)$", 
+    "hhh_4b2w2l2nu_c30_d4m1": r"$HHH_{ggf}^{0,-1} (DL)$",
+    "hhh_4b2w2l2nu_c319_d419": r"$HHH_{ggf}^{19,19} (DL)$", 
+    "hhh_4b2w2l2nu_c31_d40": r"$HHH_{ggf}^{1,0} (DL)$", 
+    "hhh_4b2w2l2nu_c31_d42": r"$HHH_{ggf}^{1,2} (DL)$",
+    "hhh_4b2w2l2nu_c32_d4m1": r"$HHH_{ggf}^{2,-1} (DL)$", 
+    "hhh_4b2w2l2nu_c34_d49": r"$HHH_{ggf}^{4,9} (DL)$", 
+    "hhh_4b2w2l2nu_c3m1_d40": r"$HHH_{ggf}^{-1,0} (DL)$",
+    "hhh_4b2w2l2nu_c3m1_d4m1": r"$HHH_{ggf}^{-1,-1} (DL)$",
+    "hhh_4b2w2l2nu_c3m1p5_d4m0p5": r"$HHH_{ggf}^{-1.5,-0.5} (DL)$",
 }
 
 
@@ -203,6 +223,7 @@ def stylize_processes(config: od.Config) -> None:
 
         if short_label := short_labels.get(proc.name, None):
             proc.short_label = short_label
+            proc.label = proc.short_label
         # unstack signal in plog
         if proc.name.lower().startswith("hhh"): 
             proc.add_tag("is_signal")

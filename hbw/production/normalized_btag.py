@@ -61,7 +61,7 @@ def normalized_btag_weights(self: Producer, events: ak.Array, **kwargs) -> ak.Ar
 
             norm_weight = sf.evaluate(*inputs)
             norm_weight = norm_weight * events[weight_name]
-            events = set_ak_column(events, f"normalized_{mode}_{weight_name}", norm_weight, value_type=np.float32)
+            events = set_ak_column(events, f"normalized_{mode}_{weight_name}", norm_weight, value_type=np.float64)
 
     return events
 
@@ -128,8 +128,8 @@ def normalized_btag_weights_from_json(self: Producer, events: ak.Array, **kwargs
 
         # create a weight vectors starting with ones for both weight variations, i.e.,
         # nomalization per pid and normalization per pid and jet multiplicity
-        norm_weight_per_pid = np.ones(len(events), dtype=np.float32)
-        norm_weight_per_pid_njet = np.ones(len(events), dtype=np.float32)
+        norm_weight_per_pid = np.ones(len(events), dtype=np.float64)
+        norm_weight_per_pid_njet = np.ones(len(events), dtype=np.float64)
 
         # fill weights with a new mask per unique process id (mostly just one)
         for pid in self.unique_process_ids:

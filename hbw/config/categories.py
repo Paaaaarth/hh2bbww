@@ -185,17 +185,23 @@ def add_lepton_categories(config: od.Config) -> None:
 
 @call_once_on_config()
 def add_njet_categories(config: od.Config) -> None:
-    config.add_category(
-        name="njet1",
-        id=100001,
-        selection="catid_njet1",
-        label=r"$N_{jet} >= 1$",
+    njet2_exact = config.add_category(
+        name="njet2_exact",
+        id=104111,
+        selection="catid_njet2_exact",
+        label=r"$N_{jet} = 2$",
     )
-    config.add_category(
-        name="njet3",
-        id=100003,
-        selection="catid_njet3",
-        label=r"$N_{jet} >= 3$",
+    njet3_exact = config.add_category(
+        name="njet3_exact",
+        id=100027,
+        selection="catid_njet3_exact",
+        label=r"$N_{jet} = 3$",
+    )
+    njet4 = config.add_category(
+        name="njet4",
+        id=111111,
+        selection="catid_njet4",
+        label=r"$N_{jet} >= 4$",
     )
 
 
@@ -213,19 +219,12 @@ def add_jet_categories(config: od.Config) -> None:
         selection="catid_boosted",
         label="boosted",
     )
-
-    # cat_1b = config.add_category(  # noqa: F841
-    #     name="1b",
-    #     id=300,
-    #     selection="catid_1b",
-    #     label=r"$\leq 1 btag$",
-    # )
-    # cat_2b = config.add_category(  # noqa: F841
-    #     name="2b",
-    #     id=600,
-    #     selection="catid_2b",
-    #     label=r"$\geq 2 btag$",
-    # )
+    cat_2b_exact = config.add_category(  # noqa: F841
+        name="2b_exact",
+        id=6000,
+        selection="catid_2b_exact",
+        label=r"$2 btag$",
+    )
     cat_3b = config.add_category(  # noqa: F841
         name="3b",
         id=7000,
@@ -244,13 +243,6 @@ def add_jet_categories(config: od.Config) -> None:
         selection="catid_4b",
         label=r"$\geq 4 btag$",
     )
-    # cat_4b_exact = config.add_category(  # noqa: F841
-    #     name="4b_exact",
-    #     id=911,
-    #     selection="catid_4b_exact",
-    #     label=r"$4 btag$",
-    # )
-
 
 @call_once_on_config()
 def add_categories_selection(config: od.Config) -> None:
@@ -310,6 +302,7 @@ def add_categories_production(config: od.Config) -> None:
         return
 
     add_jet_categories(config)
+    # add_njet_categories(config)
     # add_combined_categories(config)
 
     #
@@ -322,7 +315,8 @@ def add_categories_production(config: od.Config) -> None:
         # "met": [config.get_category("highmet"), config.get_category("lowmet")],
         "lep": [config.get_category(lep_ch) for lep_ch in config.x.lepton_channels],
         "jet": [config.get_category("resolved"), config.get_category("boosted")],
-        "b": [config.get_category("3b"), config.get_category("3b_exact"), config.get_category("4b")],
+        "b": [config.get_category("2b_exact"), config.get_category("3b_exact"), config.get_category("4b")],
+        # "njet": [config.get_category("njet2_exact"), config.get_category("njet3_exact"), config.get_category("njet4")],
     })
     t0 = time()
     n_cats = create_category_combinations(
@@ -345,6 +339,7 @@ def add_categories_ml(config, ml_model_inst):
     #
 
     add_jet_categories(config)
+    # add_njet_categories(config)
 
     #
     # add parent ml model categories
@@ -362,7 +357,7 @@ def add_categories_ml(config, ml_model_inst):
     # for i, proc in enumerate(ml_model_inst.processes):
     for proc, node_config in ml_model_inst.train_nodes.items():
         print(proc, node_config["ml_id"])
-        _id = (node_config["ml_id"] + 1) * 1000
+        _id = (node_config["ml_id"] + 1) * 10000
         # cat_label = config.get_process(proc).x.ml_label
         ml_categories.append(config.add_category(
             # NOTE: name and ID is unique as long as we don't use
@@ -388,7 +383,8 @@ def add_categories_ml(config, ml_model_inst):
         # "met": [config.get_category("highmet"), config.get_category("lowmet")],
         "lep": [config.get_category(lep_ch) for lep_ch in config.x.lepton_channels],
         "jet": [config.get_category("resolved"), config.get_category("boosted")],
-        "b": [config.get_category("3b"), config.get_category("3b_exact"), config.get_category("4b")],
+        # "njet": [config.get_category("njet2_exact"), config.get_category("njet3_exact"), config.get_category("njet4")],
+        "b": [config.get_category("2b_exact"), config.get_category("3b_exact"), config.get_category("4b")],
         "dnn": ml_categories,
     })
 

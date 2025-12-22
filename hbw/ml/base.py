@@ -306,11 +306,12 @@ class MLClassifierBase(MLModel):
                         },  # automatically rebin to 40 bins for plotting tasks
                     )
                     config_inst.add_variable(
-                        name=f"logit_mlscore.{proc}",
+                        name=f"rebinlogit_mlscore.{proc}",
                         expression=lambda events, proc=proc: np.log(events.mlscore[proc] / (1 - events.mlscore[proc])),
                         null_value=-1,
-                        binning=(1000, -2., 10.),
-                        x_title=f"logit(DNN output score {config_inst.get_process(proc).x('ml_label', proc)})",
+                        binning=(1000, -10., 10.),
+                        # x_title=f"logit(DNN output score {config_inst.get_process(proc).x('ml_label', proc)})",
+                        x_title=f"logit(DNN output score {proc})",
                         aux={
                             "inputs": {f"mlscore.{proc}"},
                             "rebin": 25,
@@ -320,6 +321,23 @@ class MLClassifierBase(MLModel):
                             },
                         },  # automatically rebin to 40 bins for plotting tasks
                     )
+                    config_inst.add_variable(
+                        name=f"logit_mlscore.{proc}",
+                        expression=lambda events, proc=proc: np.log(events.mlscore[proc] / (1 - events.mlscore[proc])),
+                        null_value=-1,
+                        binning=(1000, -2., 10.),
+                        x_title=f"logit(DNN output score {config_inst.get_process(proc).x('ml_label', proc)})",
+                        # x_title=f"logit(DNN output score {proc})",
+                        aux={
+                            "inputs": {f"mlscore.{proc}"},
+                            "rebin": 25,
+                            "rebin_config": {
+                                "processes": [proc],
+                                "n_bins": 4,
+                            },
+                        },  # automatically rebin to 40 bins for plotting tasks
+                    )
+
 
         # add tag to allow running this function just once
         self.config_inst.add_tag(f"{self.cls_name}_called")
@@ -737,6 +755,150 @@ class ExampleDNN(MLClassifierBase):
 
 # dervive another model from the ExampleDNN class with different class attributes
 example_test = ExampleDNN.derive("example_test", cls_dict={"epochs": 5})
+
+
+# class HypeModel(MLClassifierBase):
+#     """
+#     Hyperparameter optimized model from keras-tuner
+#     """
+
+#     import keras_tuner as kt
+#     # Default parameters for the DNN and the tuner
+#     _default__epochs: int = 10
+#     _default__tuner_trials: int = 15  # Number of hyperparameter combinations to test
+#     _default__tuner_executions: int = 1 # Number of times to train each combination
+
+#     def build_hypermodel(self, hp: kt.HyperParameters):
+#         """
+#         Builds and compiles a Keras model with tunable hyperparameters.
+#         This function defines the search space for the tuner.
+
+#         Args:
+#             hp (kt.HyperParameters): The Keras Tuner HyperParameters object.
+
+#         Returns:
+#             A compiled Keras model.
+#         """
+#         import tensorflow.keras as keras
+#         from keras.models import Sequential
+#         from keras.layers import Dense, BatchNormalization
+#         from hbw.ml.tf_util import cumulated_crossentropy
+
+#         n_inputs = len(set(self.input_features))
+#         n_outputs = len(self.processes)
+
+#         model = Sequential()
+#         model.add(BatchNormalization(input_shape=(n_inputs,)))
+
+#         # Tune the number of hidden layers
+#         for i in range(hp.Int("hp_layers", min_value=1, max_value=4)):
+#             # Tune the number of units in each layer
+#             model.add(Dense(
+#                 units=hp.Int(f"hp_units_{i}", min_value=32, max_value=1024, step=32),
+#                 activation="relu"
+#             ))
+
+#         model.add(Dense(n_outputs, activation="softmax"))
+
+#         # Tune the learning rate for the optimizer
+#         hp_learning_rate = hp.Choice("hp_learning_rate", values=[1e-2, 1e-3, 5e-4])
+#         optimizer = keras.optimizers.Adam(learning_rate=hp_learning_rate)
+
+#         # Compile the network based on negative weight handling
+#         if self.negative_weights == "ignore":
+#             model.compile(
+#                 loss="categorical_crossentropy",
+#                 optimizer=optimizer,
+#                 weighted_metrics=["categorical_accuracy"],
+#             )
+#         else:
+#             model.compile(
+#                 loss=cumulated_crossentropy,
+#                 optimizer=optimizer,
+#                 weighted_metrics=["categorical_accuracy"],
+#             )
+
+#         return model
+
+#     def fit_ml_model(
+#         self,
+#         task: law.Task,
+#         # The 'model' argument is no longer used here as the tuner builds it.
+#         model,
+#         train: DotDict[np.array],
+#         validation: DotDict[np.array],
+#         output: law.LocalDirectoryTarget,
+#     ) -> None:
+
+#         import tensorflow as tf
+#         from hbw.ml.tf_util import MultiDataset
+#         import keras_tuner as kt
+
+#         """
+#         Initializes and runs the hyperparameter search to find the best model,
+#         then assigns the best model to the instance.
+#         """
+#         # 1. Prepare data for TensorFlow
+#         with tf.device("CPU"):
+#             tf_train = MultiDataset(data=train, batch_size=self.batchsize, kind="train")
+#             tf_validation = tf.data.Dataset.from_tensor_slices(
+#                 (validation.features, validation.target, validation.ml_weights),
+#             ).batch(self.batchsize)
+
+#         # 2. Initialize the Keras Tuner
+#         # We use RandomSearch, but other options like Hyperband or BayesianOptimization exist.
+#         tuner = kt.BayesianOptimization(
+#             hypermodel=self.build_hypermodel,
+#             objective=kt.Objective("val_categorical_accuracy", direction="max"),
+#             max_trials=self.tuner_trials,
+#             executions_per_trial=self.tuner_executions,
+#             directory=output.path,  # Directory to store tuning results
+#             project_name="dnn_hyper_tuning"
+#         )
+
+#         # Add a callback to stop training early if validation loss doesn't improve
+#         stop_early = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=5)
+
+#         logger.info(f"Starting hyperparameter search with {self.tuner_trials} trials...")
+
+#         # 3. Run the search
+#         # The tuner will now sample hyperparameters, build a model, train it,
+#         # and evaluate it to find the best combination.
+#         tuner.search(
+#             (x for x in tf_train),
+#             epochs=self.epochs,
+#             validation_data=tf_validation,
+#             steps_per_epoch=tf_train.iter_smallest_process,
+#             callbacks=[stop_early],
+#             verbose=2,
+#         )
+
+#         logger.info("Hyperparameter search complete.")
+
+#         # 4. Retrieve and assign the best model
+#         # You can also inspect the best hyperparameters found.
+#         best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
+#         logger.info(f"""
+#         Best hyperparameters found:
+#          - Layers: {best_hps.get('hp_layers')}
+#          - Learning Rate: {best_hps.get('hp_learning_rate')}
+#         """)
+#         # You can add more logs for hp_units if needed
+
+#         self.ml_model = tuner.get_best_models(num_models=1)[0]
+
+#         # Optional: Print a summary of the best model's architecture
+#         logger.info("Summary of the best model:")
+#         self.ml_model.summary()
+
+#     def prepare_ml_model(self, task: law.Task):
+#         """
+#         This method is part of the MLClassifierBase interface.
+#         In this implementation, the model is built and selected during the
+#         hyperparameter search in `fit_ml_model`. Therefore, this method
+#         can simply return None.
+#         """
+#         return None
 
 
 # load all ml modules here

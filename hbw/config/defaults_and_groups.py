@@ -96,7 +96,7 @@ def set_config_defaults_and_groups(config_inst):
 
     # define the default dataset and process based on the analysis tags
     signal_tag = "qqlns" if config_inst.has_tag("is_sl") else "2l2nu"
-    default_signal_process = "hhh_4b2w_c30_d40"
+    default_signal_process = "hhh_4b2w2l2nu_c30_d40"
     signal_generator = "powheg"
 
     if config_inst.has_tag("resonant"):
@@ -121,11 +121,11 @@ def set_config_defaults_and_groups(config_inst):
     config_inst.x.default_ml_model = default_ml_model
     config_inst.x.default_inference_model = "default" if year == 2017 else "sl_22"
     # config_inst.x.default_categories = ["incl", "sr", "dycr", "ttcr", "3b", "4b", "sr_3b", "sr_4b"]
-    config_inst.x.default_categories = ["incl", "sr", "3b", "4b", "sr_3b", "sr_4b", "3b_exact", "sr_3b_exact"]
+    config_inst.x.default_categories = ["incl", "sr", "3b_exact", "sr_3b_exact","2b_exact", "sr_2b_exact", "4b", "sr_4b"]
     config_inst.x.default_variables = ["jet0_pt", "mll", "ptll", "lepton0_pt", "lepton1_pt", "mli_mbb_sum", "mli_mbb_sum_2", 
                                         "mli_mbb_dr_sum", "mli_mbb_dr_sum_2", "mli_mbb_remaining", "mli_mbb_dr_max_sum",
                                         "mli_mbb_dr_all_sum",]
-    config_inst.x.default_processes = ["hhh_sm", "hhh_background"]
+    config_inst.x.default_processes = ["hhh_sm", "hhh_fake", "hhh_background"]
 
     # general_settings default needs to be tuple (or dict) to be resolved correctly
     config_inst.x.default_general_settings = ("data_mc_plots",)
@@ -146,23 +146,12 @@ def set_config_defaults_and_groups(config_inst):
     # (used in wrapper_factory and during plotting)
     config_inst.x.process_groups = {
         # Collection of VBF samples with most shape and rate difference
-        "hhh_sm":["hhh_4b2w_c30_d40"],
-        "hhh_bsm": ["hhh_4b2w_c3_0_d4_99", "hhh_4b2w_c3_0_d4_minus1", 
-                    "hhh_4b2w_c3_19_d4_19", "hhh_4b2w_c3_1_d4_0", 
-                    "hhh_4b2w_c3_1_d4_2", "hhh_4b2w_c3_2_d4_minus1", 
-                    "hhh_4b2w_c3_4_d4_9", "hhh_4b2w_c3_minus1_d4_0", 
-                    "hhh_4b2w_c3_minus1p5_d4_minus0p5"],
-        "hhh_fake": ["hhh_4b2w_c3_minus1_d4_minus1"],
+        "hhh_sm":["hhh_4b2w2l2nu_c30_d40",],
+        "hhh_bsm": ["hhh_4b2w2l2nu_c30_d499", "hhh_4b2w2l2nu_c30_d4m1",
+                    "hhh_4b2w2l2nu_c319_d419", "hhh_4b2w2l2nu_c31_d40", "hhh_4b2w2l2nu_c31_d42",
+                    "hhh_4b2w2l2nu_c32_d4m1", "hhh_4b2w2l2nu_c34_d49", "hhh_4b2w2l2nu_c3m1_d40",
+                    "hhh_4b2w2l2nu_c3m1_d4m1", "hhh_4b2w2l2nu_c3m1p5_d4m0p5",],
         "hhh_background": ["st", "dy", "vv", "tt", "hh_sm", "h"],
-        "hhh_background_limited": ["st", "dy", "vv", "tt_limited", "hh_sm", "h_limited"],
-        "tt_limited": ["tt_dl", "tt_sl"],
-        "h_limited": [
-			"h_ggf_hww2l2nu",
-			"zh_zll_hbb", "zh_zll_hcc", "zh_hww2l2nu", 
-            "zh_gg_zll_hbb", "zh_gg_zqq_hbb", "zh_gg_zll_hcc",
-			"wph_wlnu_hbb", "wph_wlnu_hcc", "wph_hzg_zll", "wmh_wlnu_hbb", "wmh_hzg_zll",
-			"tth_hbb", "tth_hnonbb"
-        ],
 
         "hh_sm": [
             "hh_ggf_hbb_hww_kl1_kt1", 
@@ -358,7 +347,7 @@ def set_config_defaults_and_groups(config_inst):
             "sr__1mu__ml_tt", "sr__1mu__ml_st", "sr__1mu__ml_v_lep",
         ),
         # Dilepton
-        "SR_dl": bracket_expansion(["sr__{1b,2b}__ml_{signal_ggf2,sig_ggf,hh_ggf_hbb_hvv2l2nu_kl1_kt1}"]),
+        "SR_dl": bracket_expansion(["sr_{2b_exact,3b_exact,4b}_ml_{sig_all}"]),
         "vbfSR_dl": bracket_expansion(["sr__{1b,2b}__ml_{signal_vbf2,sig_vbf,hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1}"]),
         "SR_dl_resolved": (
             "sr__resolved__1b__ml_signal_ggf2",
@@ -374,7 +363,7 @@ def set_config_defaults_and_groups(config_inst):
         "vbfSR_dl_boosted": (
             "sr__boosted__ml_signal_vbf2",
         ),
-        "BR_dl": bracket_expansion(["sr__{1b,2b}__ml_{tt,st,dy,h}"]),
+        "BR_dl": bracket_expansion(["sr_{2b_exact,3b_exact,4b}_ml_{tt,st,dy,h}"]),
     }
 
     # variable groups for conveniently looping over certain variables
@@ -527,50 +516,24 @@ def set_config_defaults_and_groups(config_inst):
 
     # groups are defined via config.x.category_groups
     config_inst.x.default_bins_per_category = {
-        # Single lepton
-        "SR_sl": 10,
-        "vbfSR_sl": 5,
-        "BR_sl": 3,
-        "SR_sl_resolved": 10,
-        "SR_sl_boosted": 5,
-        "vbfSR_sl_resolved": 5,
-        "vbfSR_sl_boosted": 3,
         # Dilepton
         "SR_dl": 10,
-        "vbfSR_dl": 10,
-        "BR_dl": 3,
-        "SR_dl_resolved": 10,
-        "SR_dl_boosted": 10,
-        "vbfSR_dl_resolved": 10,
-        "vbfSR_dl_boosted": 10,
+        "BR_dl": 1,
     }
 
-    is_signal_sm = lambda proc_name: "kl1_kt1" in proc_name or "kv1_k2v1_kl1" in proc_name
-    is_signal_sm_ggf = lambda proc_name: "kl1_kt1" in proc_name
-    is_signal_sm_vbf = lambda proc_name: "kv1_k2v1_kl1" in proc_name
+    # is_signal_sm = lambda proc_name: "kl1_kt1" in proc_name or "kv1_k2v1_kl1" in proc_name
+    is_signal_sm_ggf = lambda proc_name: "hhh_4b2w2l2nu_c30_d40" in proc_name
+    # is_signal_sm_vbf = lambda proc_name: "kv1_k2v1_kl1" in proc_name
     # is_gghh_sm = lambda proc_name: "kl1_kt1" in proc_name
     # is_qqhh_sm = lambda proc_name: "kv1_k2v1_kl1" in proc_name
     # is_signal_ggf_kl1 = lambda proc_name: "kl1_kt1" in proc_name and "hh_ggf" in proc_name
     # is_signal_vbf_kl1 = lambda proc_name: "kv1_k2v1_kl1" in proc_name and "hh_vbf" in proc_name
     is_background = lambda proc_name: (
-        "hbb_hvv" not in proc_name and "hbb_hww" not in proc_name and "hbb_hzz" not in proc_name
+        "hhh" not in proc_name
     )
 
     config_inst.x.inference_category_rebin_processes = {
-        # Single lepton
-        "SR_sl": is_signal_sm_ggf,
-        "vbfSR_sl": is_signal_sm_vbf,
-        "SR_sl_resolved": is_signal_sm,
-        "SR_sl_boosted": is_signal_sm,
-        "vbfSR_sl_resolved": is_signal_sm,
-        "vbfSR_sl_boosted": is_signal_sm,
-        "BR_sl": is_background,
         # Dilepton
         "SR_dl": is_signal_sm_ggf,
-        "vbfSR_dl": is_signal_sm_vbf,
-        "SR_dl_resolved": is_signal_sm_ggf,
-        "SR_dl_boosted": is_signal_sm_ggf,
-        "vbfSR_dl_resolved": is_signal_sm_vbf,
-        "vbfSR_dl_boosted": is_signal_sm_vbf,
         "BR_dl": is_background,
     }

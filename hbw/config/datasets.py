@@ -74,7 +74,10 @@ def hbw_dataset_names(config: od.Config, as_list: bool = False) -> DotDict[str: 
         # **data_datasets,
         "data": data_datasets,
         "tt": ["tt_sl_powheg", "tt_dl_powheg", "tt_fh_powheg"],
-        "hhh": ["hhh_4b2w_c30_d40_amcatnlo", "hhh_4b2w_c3_minus1_d4_minus1_amcatnlo"],
+        "hhh": ["hhh_4b2w2l2nu_c30_d40_amcatnlo", "hhh_4b2w2l2nu_c30_d499_amcatnlo", "hhh_4b2w2l2nu_c30_d4m1_amcatnlo",
+                "hhh_4b2w2l2nu_c319_d419_amcatnlo", "hhh_4b2w2l2nu_c31_d40_amcatnlo", "hhh_4b2w2l2nu_c31_d42_amcatnlo",
+                "hhh_4b2w2l2nu_c32_d4m1_amcatnlo", "hhh_4b2w2l2nu_c34_d49_amcatnlo", "hhh_4b2w2l2nu_c3m1_d40_amcatnlo",
+                "hhh_4b2w2l2nu_c3m1_d4m1_amcatnlo", "hhh_4b2w2l2nu_c3m1p5_d4m0p5_amcatnlo",],
         "st": [
             # "st_schannel_lep_4f_amcatnlo",
             # "st_schannel_had_4f_amcatnlo",
@@ -122,21 +125,6 @@ def hbw_dataset_names(config: od.Config, as_list: bool = False) -> DotDict[str: 
                 "dy_m50toinf_2j_amcatnlo",
             ]),
         ],
-        "w_lnu": [
-            *config.x.if_era(run=2, values=[  # TODO: update to amcatnlo aswell
-                "w_lnu_ht70to100_madgraph",
-                "w_lnu_ht100to200_madgraph",
-                "w_lnu_ht200to400_madgraph",
-                "w_lnu_ht400to600_madgraph",
-                "w_lnu_ht600to800_madgraph",
-                "w_lnu_ht800to1200_madgraph",
-                "w_lnu_ht1200to2500_madgraph",
-                "w_lnu_ht2500toinf_madgraph",
-            ]),
-            *config.x.if_era(run=3, values=[
-                "w_lnu_amcatnlo",
-            ]),
-        ],
         "vv": [
             *config.x.if_era(run=3, values=[
                 "ww_pythia",
@@ -159,7 +147,7 @@ def hbw_dataset_names(config: od.Config, as_list: bool = False) -> DotDict[str: 
                 # TODO: remove whatever is not really necessary
                 # "h_ggf_hbb_powheg",  # empty in DL (< 0.01 events in postEE)
                 "h_ggf_hww2l2nu_powheg",
-                "h_vbf_hbb_powheg",
+                # "h_vbf_hbb_powheg", # Probably empty!!!
                 "h_vbf_hww2l2nu_powheg",
                 # "h_ggf_htt_amcatnlo",  # TODO: check if empty
                 # "h_ggf_hzg_zll_powheg",  # probably empty in DL SR
@@ -174,12 +162,12 @@ def hbw_dataset_names(config: od.Config, as_list: bool = False) -> DotDict[str: 
                 # "wph_wqq_hbb_powheg",  # basically empty in DL (< 0.01 events in postEE)
                 "wph_wlnu_hbb_powheg",
                 # "wph_wqq_hcc_powheg",  # basically empty in DL (< 0.01 events in postEE)
-                "wph_wlnu_hcc_powheg",
+                # "wph_wlnu_hcc_powheg", # Probably empty!!!
                 "wph_hzg_zll_powheg",
                 # "wmh_wqq_hbb_powheg",  # basically empty in DL (< 0.01 events in postEE)
                 "wmh_wlnu_hbb_powheg",
                 # "wmh_wqq_hcc_powheg",  # basically empty in DL (< 0.01 events in postEE)
-                "wmh_wlnu_hcc_powheg",
+                # "wmh_wlnu_hcc_powheg", # Probably empty!!!
                 "wmh_hzg_zll_powheg",
                 "tth_hbb_powheg",
                 "tth_hnonbb_powheg",  # overlap with other samples, so be careful
@@ -197,7 +185,7 @@ def hbw_dataset_names(config: od.Config, as_list: bool = False) -> DotDict[str: 
         "hh_vbf": [
             *vbf_samples("hbb_hvvqqlnu"),
             *vbf_samples("hbb_hvv2l2nu"),
-            *vbf_samples("hbb_htt"),
+            # *vbf_samples("hbb_htt"),
             *config.x.if_era(run=3, values=vbf_samples("hbb_hvv")),
         ],
         "graviton_hh_ggf_bbww": [
