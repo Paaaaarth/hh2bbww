@@ -58,7 +58,7 @@ class HBWInferenceModelBase(InferenceModel):
     # 14: increase min eff. MC entries from 3 to 12 (rerunning cards just for clearer versioning)
     version: int = 15
 
-    bjet_cats: set = {"1b", "2b", "boosted"}
+    bjet_cats: set = {"2b", "3b", "34", "boosted"}
     campaign_tags: set = {"2022postEE", "2022preEE", "2023postBPix", "2023preBPix"}
     multi_variables: bool = False
 
@@ -337,7 +337,7 @@ class HBWInferenceModelBase(InferenceModel):
             if self.skip_data:
                 cat_kwargs["data_from_processes"] = [
                     proc for proc in self.inf_processes
-                    if not proc.startswith("hh_")
+                    if not proc.startswith("hhh_")
                 ]
 
             # add the category to the inference model
@@ -398,7 +398,7 @@ class HBWInferenceModelBase(InferenceModel):
                     )
                     for config_inst in self.config_insts
                 },
-                "is_signal": ("hh_" in proc.lower()),
+                "is_signal": ("hhh_" in proc.lower()),
             }
             if self.scale_signal and kwargs["is_signal"]:
                 logger.info(f"Scaling signal process {proc} by factor {self.scale_signal}.")

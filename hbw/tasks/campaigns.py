@@ -19,25 +19,25 @@ logger = law.logger.get_logger(__name__)
 
 
 valid_campaigns = {
-    "run2_2016_nano_v9",  # includes NanoV7 hh2bbvv signal samples
-    "run2_2016_nano_uhh_v12",  # no hh2bbvv signal samples
-    "run2_2017_nano_v9",  # includes NanoV7 hh2bbvv signal samples
-    "run2_2017_nano_uhh_v12",  # no hh2bbvv signal samples
-    "run2_2018_nano_v9",  # includes NanoV7 hh2bbvv signal samples
-    "run2_2018_nano_uhh_v12",  # no hh2bbvv signal samples
-    "run3_2022_preEE_nano_uhh_v12",
-    "run3_2022_preEE_nano_v12",
+    # "run2_2016_nano_v9",  # includes NanoV7 hh2bbvv signal samples
+    # "run2_2016_nano_uhh_v12",  # no hh2bbvv signal samples
+    # "run2_2017_nano_v9",  # includes NanoV7 hh2bbvv signal samples
+    # "run2_2017_nano_uhh_v12",  # no hh2bbvv signal samples
+    # "run2_2018_nano_v9",  # includes NanoV7 hh2bbvv signal samples
+    # "run2_2018_nano_uhh_v12",  # no hh2bbvv signal samples
+    # "run3_2022_preEE_nano_uhh_v12",
+    # "run3_2022_preEE_nano_v12",
     "run3_2022_preEE_nano_v13",
     "run3_2022_preEE_nano_uhh_v14",
-    "run3_2022_postEE_nano_v12",
+    # "run3_2022_postEE_nano_v12",
     "run3_2022_postEE_nano_v13",
-    "run3_2022_postEE_nano_uhh_v12",
+    # "run3_2022_postEE_nano_uhh_v12",
     "run3_2022_postEE_nano_uhh_v14",
-    "run3_2023_preBPix_nano_v12",
+    # "run3_2023_preBPix_nano_v12",
     "run3_2023_preBPix_nano_v13",
-    "run3_2023_preBPix_nano_uhh_v12",
-    "run3_2023_preBPix_nano_uhh_v14",
-    "run3_2023_postBPix_nano_v12",
+    # "run3_2023_preBPix_nano_uhh_v12",
+    # "run3_2023_preBPix_nano_uhh_v14",
+    # "run3_2023_postBPix_nano_v12",
     "run3_2023_postBPix_nano_v13",
     "run3_2023_postBPix_nano_uhh_v12",
     "run3_2023_postBPix_nano_uhh_v14",
@@ -50,51 +50,56 @@ is_data_func = lambda dataset_name: dataset_name.startswith("data_")
 is_mc_func = lambda dataset_name: not dataset_name.startswith("data_")
 
 campaign_map = {
-    "c17v9": {
-        "run2_2017_nano_v9": {},
-    },
-    "c22prev12": {
-        "run3_2022_preEE_nano_uhh_v12": {},
-        "run3_2022_preEE_nano_v12": {"dataset_prio_func": is_data_func},
-        "run3_2022_preEE_nano_v13": {},
-    },
-    "c22postv12": {
-        "run3_2022_postEE_nano_uhh_v12": {},
-        "run3_2022_postEE_nano_v12": {"dataset_prio_func": is_data_func},
-        "run3_2022_postEE_nano_v13": {},
-    },
+    # "c17v9": {
+    #     "run2_2017_nano_v9": {},
+    # },
+    # "c22prev12": {
+    #     "run3_2022_preEE_nano_uhh_v12": {},
+    #     "run3_2022_preEE_nano_v12": {"dataset_prio_func": is_data_func},
+    #     "run3_2022_preEE_nano_v13": {},
+    # },
+    # "c22postv12": {
+    #     "run3_2022_postEE_nano_uhh_v12": {},
+    #     "run3_2022_postEE_nano_v12": {"dataset_prio_func": is_data_func},
+    #     "run3_2022_postEE_nano_v13": {},
+    # },
     "c23prev14": {
         "run3_2023_preBPix_nano_uhh_v14": {},
+        "run3_2023_preBPix_nano_v13": {},
         # "run3_2023_preBPix_nano_v12": {"skip_data_func": is_mc_func},
+
     },
     "c23postv14": {
         "run3_2023_postBPix_nano_uhh_v14": {},
+        "run3_2023_postBPix_nano_v13": {},
         # "run3_2023_postBPix_nano_v12": {"skip_data_func": is_mc_func},
     },
-    "c22postv12_das": {
-        "run3_2022_postEE_nano_v12": {},
-        "run3_2022_postEE_nano_v13": {},
-        "run3_2022_postEE_nano_uhh_v12": {},
-    },
-    "c22prev12_das": {
-        "run3_2022_preEE_nano_v12": {},
-        "run3_2022_preEE_nano_v13": {},
-        "run3_2022_preEE_nano_uhh_v12": {},
-    },
-    "c23prev12": {
-        "run3_2023_preBPix_nano_v12": {},
-        "run3_2023_preBPix_nano_v13": {},
-    },
-    "c23postv12": {
-        "run3_2023_postBPix_nano_v12": {},
-        "run3_2023_postBPix_nano_v13": {},
-    },
+    # "c22postv12_das": {
+    #     "run3_2022_postEE_nano_v12": {},
+    #     "run3_2022_postEE_nano_v13": {},
+    #     "run3_2022_postEE_nano_uhh_v12": {},
+    # },
+    # "c22prev12_das": {
+    #     "run3_2022_preEE_nano_v12": {},
+    #     "run3_2022_preEE_nano_v13": {},
+    #     "run3_2022_preEE_nano_uhh_v12": {},
+    # },
+    # "c23prev12": {
+    #     "run3_2023_preBPix_nano_v12": {},
+    #     "run3_2023_preBPix_nano_v13": {},
+    # },
+    # "c23postv12": {
+    #     "run3_2023_postBPix_nano_v12": {},
+    #     "run3_2023_postBPix_nano_v13": {},
+    # },
     # Nano V14
     "c22prev14": {
         "run3_2022_preEE_nano_uhh_v14": {},
+        "run3_2022_preEE_nano_v13": {},
     },
     "c22postv14": {
         "run3_2022_postEE_nano_uhh_v14": {},
+        "run3_2022_postEE_nano_v13": {},
     },
 }
 

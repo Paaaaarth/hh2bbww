@@ -122,11 +122,13 @@ def jet_selection(
     events = set_ak_column(events, "cutflow.n_btag", ak.sum(btag_mask, axis=1))
     steps["nBjet1"] = events.cutflow.n_btag >= 1
     steps["nBjet2"] = events.cutflow.n_btag >= 2
-    if self.config_inst.x("n_btag", 0) > 2:
+    steps["nBjet3"] = events.cutflow.n_btag >= 3
+    steps["nBjet4"] = events.cutflow.n_btag >= 4
+    if self.config_inst.x("n_btag", 0) > 4:
         steps[f"nBjet{self.config_inst.x.n_btag}"] = events.cutflow.n_btag >= self.config_inst.x.n_btag
 
     # define b-jets as the two b-score leading jets, b-score sorted
-    bjet_indices = masked_sorted_indices(jet_mask, b_score)[:, :2]
+    bjet_indices = masked_sorted_indices(jet_mask, b_score)[:, :4]
 
     # define lightjets as all non b-jets, pt-sorted
     b_idx = ak.fill_none(ak.pad_none(bjet_indices, 2), -1)
@@ -175,6 +177,8 @@ def jet_selection_init(self: Selector) -> None:
         "nJet4": r"$N_{jets}^{AK4} \geq 4$",
         "nBjet1": r"$N_{jets}^{BTag} \geq 1$",
         "nBjet2": r"$N_{jets}^{BTag} \geq 2$",
+        "nBjet3": r"$N_{jets}^{BTag} \geq 3$",
+        "nBjet4": r"$N_{jets}^{BTag} \geq 4$",
     })
 
     if self.config_inst.x("do_cutflow_features", False):

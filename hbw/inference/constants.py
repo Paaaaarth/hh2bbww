@@ -130,7 +130,7 @@ processes_per_rate_unconstrained = {
     "st": ["st_schannel", "st_tchannel", "st_twchannel"],
 }
 
-is_signal = lambda process: process.startswith("hh_")
+is_signal = lambda process: process.startswith("hhh_")
 is_bkg = lambda process: not is_signal(process)
 is_boosted_ggf = lambda category: "boosted" in category and "sig_vbf" in category
 is_boosted_vbf = lambda category: "boosted" in category and "sig_ggf" in category

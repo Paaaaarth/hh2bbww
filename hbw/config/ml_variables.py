@@ -125,6 +125,160 @@ def add_common_ml_variables(config: od.Config) -> None:
         x_title=r"min $\Delta R(\ell,j)$",
         aux={"overflow": True},
     )
+    config.add_variable(
+        name="mli_mbb_sum",
+        expression="mli_mbb_sum",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$|m_{b_1b_2}|$",
+    )
+    config.add_variable(
+        name="mli_mbb_sum_2",
+        expression="mli_mbb_sum_2",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$|m_{b_3b_4}|$",
+    )
+    config.add_variable(
+        name="mli_mbb_dr_sum",
+        expression="mli_mbb_dr_sum",
+        binning=(40, 0, 200),
+        x_title=r"$m_{h_{\Delta R(b_1,b_2)}} [Smallest]$",
+    )
+    config.add_variable(
+        name="mli_mbb_dr_sum_2",
+        expression="mli_mbb_dr_sum_2",
+        binning=(40, 0, 200),
+        x_title=r"$m_{h_{\Delta R(b_x,b_y)}}$ [Second least]",
+    )
+    config.add_variable(
+        name="mli_mbb_remaining",
+        expression="mli_mbb_remaining",
+        binning=(40, 0, 200),
+        x_title=r"$m_{h_{b_3b_4}} remaining$",
+    )
+    config.add_variable(
+        name="mli_mbb_dr_all_sum",
+        expression="mli_mbb_dr_all_sum",
+        binning=(40, 0, 200),
+        x_title=r"$m_{h_{\Delta R(j,j)}}$",
+    )
+    config.add_variable(
+        name="mli_mbb_dr_max_sum",
+        expression="mli_mbb_dr_max_sum",
+        binning=(40, 0, 400),
+        x_title=r"$m_{h_{\Delta R(b,b)}}$ Max",
+    )
+    config.add_variable(
+        name="mli_hh_dr",
+        expression="mli_hh_dr",
+        binning=(40, 0, 8),
+        x_title=r"$\Delta R(h,h)$",
+    )
+    config.add_variable(
+        name="mli_dr_h_ll",
+        expression="mli_dr_h_ll",
+        binning=(40, 0, 8),
+        x_title=r"$\Delta R(h,ll)$",
+    )
+    config.add_variable(
+        name="mli_lb_indv_pt",
+        expression="mli_lb_indv_pt",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$p_{T}^{l}+p_{T}^{b}$",
+    )
+    config.add_variable(
+        name="mli_lb_pt",
+        expression="mli_lb_pt",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$p_{T}^{lb}$",
+    )
+    config.add_variable(
+        name="mli_lb_indv_mass",
+        expression="mli_lb_indv_mass",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$m_{lb}$",
+    )
+    config.add_variable(
+        name="mli_lb_mass",
+        expression="mli_lb_mass",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$m_{lb}$",
+    )
+    config.add_variable(
+        name="mli_lb_pt_2l",
+        expression="mli_lb_pt_2l",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$p_{T}^{b}+2 \times p_{T}^{l}$",
+    )
+    config.add_variable(
+        name="mli_lb_mass_2l",
+        expression="mli_lb_mass_2l",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$m_{b+2l}$",
+    )
+    config.add_variable(
+        name="mli_lb_indv_mass_2l",
+        expression="mli_lb_indv_mass_2l",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$m_{b}+2 \times m_{l}$",
+    )
+    config.add_variable(
+        name="mli_lb_indv_pt_2l",
+        expression="mli_lb_indv_pt_2l",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$p_{T}^{b}+2 \times p_{T}^{l}$",
+    )
+    config.add_variable(
+        name="mli_lb_top",
+        expression="mli_lb_top",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$m_{lb}^{top}$",
+    )
+    config.add_variable(
+        name="mli_lb_top_indv",
+        expression="mli_lb_top_indv",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$m_{l}^{top}+m_{b}^{top}$",
+    )
+    config.add_variable(
+        name="mli_lb_top_2l",
+        expression="mli_lb_top_2l",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$m_{b+2l}^{top}$",
+    )
+    config.add_variable(
+        name="mli_lb_top_indv_2l",
+        expression="mli_lb_top_indv_2l",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$m_{b}^{top}+2 \times m_{l}^{top}$",
+    )
+    config.add_variable(
+        name="mli_lb_top_2b",
+        expression="mli_lb_top_2b",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$m_{2b+l}^{top}$",
+    )
+    config.add_variable(
+        name="mli_lb_top_indv_2b",
+        expression="mli_lb_top_indv_2b",
+        binning=(40, 0, 400),
+        unit="GeV",
+        x_title=r"$2 \times m_{b}^{top}+m_{l}^{top}$",
+    )
     for postfix, object_label in (
         ("", "central jets"),
         ("_alljets", "central + forward jets"),
@@ -197,7 +351,7 @@ def add_common_ml_variables(config: od.Config) -> None:
     # low-level variables
     #
 
-    for obj in ["b1", "b2", "j1", "j2"]:
+    for obj in ["b1", "b2", "b3", "b4", "j1", "j2"]:
         for var in ["b_score"]:
             config.add_variable(
                 name=f"mli_{obj}_{var}",
@@ -208,7 +362,7 @@ def add_common_ml_variables(config: od.Config) -> None:
                 aux={"overflow": True},
             )
 
-    for obj in ["b1", "b2", "j1", "j2", "vbfcand1", "vbfcand2", "lep", "met"]:
+    for obj in ["b1", "b2", "b3", "b4", "j1", "j2", "vbfcand1", "vbfcand2", "lep", "met"]:
         for var in ["pt", "eta", "phi"]:
             if var == "eta" and obj == "met":
                 continue

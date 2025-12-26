@@ -99,7 +99,7 @@ def set_config_defaults_and_groups(config_inst):
     """ Configuration function that sets all the defaults and groups in the config_inst """
     # define the default dataset and process based on the analysis tags
     signal_tag = "qqlnu" if config_inst.has_tag("is_sl") else "2l2nu"
-    default_signal_process = "hh_ggf_hbb_hvv_kl1_kt1"
+    default_signal_process = "hhh_4b2w2l2nu_c30_d40"
     signal_generator = "powheg"
 
     if config_inst.has_tag("resonant"):
@@ -127,8 +127,10 @@ def set_config_defaults_and_groups(config_inst):
     config_inst.x.default_hist_producer = "met_geq40_with_dy_corr"
     config_inst.x.default_ml_model = default_ml_model
     config_inst.x.default_inference_model = "default_unblind"
-    config_inst.x.default_categories = ["incl", "sr", "dycr", "ttcr"]
+    # config_inst.x.default_categories = ["incl", "sr", "dycr", "ttcr"]
+    config_inst.x.default_categories = ["incl", "sr", "2b", "3b", "4b"]
     config_inst.x.default_variables = ["jet0_pt", "mll", "n_jet", "ptll", "lepton0_pt", "lepton1_pt"]
+    config_inst.x.default_processes = ["hhh_sm", "hhh_fake", "hhh_background"]
 
     # general_settings default needs to be tuple (or dict) to be resolved correctly
     # config_inst.x.default_general_settings = ("data_mc_plots_blind_conservative",)
@@ -142,10 +144,13 @@ def set_config_defaults_and_groups(config_inst):
     backgrounds0 = ["other", "h", "ttv", "vv", "w_lnu", "st", "dy_m4to10", "dy_m10to50", "dy_m50toinf", "tt"]
     backgrounds1 = ["other", "h", "ttv", "vv", "w_lnu", "st", "dy_lf", "dy_hf", "tt"]
     hbbhww_sm = ["hh_ggf_hbb_hww_kl1_kt1", "hh_vbf_hbb_hww_kv1_k2v1_kl1"]
+    # hh_sm = [
+    #     "hh_ggf_hbb_hww_kl1_kt1", "hh_vbf_hbb_hww_kv1_k2v1_kl1",
+    #     "hh_ggf_hbb_hzz_kl1_kt1", "hh_vbf_hbb_hzz_kv1_k2v1_kl1",
+    #     "hh_ggf_hbb_htt_kl1_kt1", "hh_vbf_hbb_htt_kv1_k2v1_kl1",
+    # ]
     hh_sm = [
-        "hh_ggf_hbb_hww_kl1_kt1", "hh_vbf_hbb_hww_kv1_k2v1_kl1",
-        "hh_ggf_hbb_hzz_kl1_kt1", "hh_vbf_hbb_hzz_kv1_k2v1_kl1",
-        "hh_ggf_hbb_htt_kl1_kt1", "hh_vbf_hbb_htt_kv1_k2v1_kl1",
+        "hh_ggf_hbb_hww_kl1_kt1", "hh_vbf_hbb_hww_kv1_k2v1_kl1", "hh_ggf_hbb_hzz_kl1_kt1", "hh_ggf_hbb_htt_kl1_kt1",
     ]
     hh_sm1 = [
         "hh_ggf_kl1_kt1", "hh_vbf_kv1_k2v1_kl1",
@@ -154,6 +159,13 @@ def set_config_defaults_and_groups(config_inst):
     # process groups for conveniently looping over certain processs
     # (used in wrapper_factory and during plotting)
     config_inst.x.process_groups = {
+        # collection of HHH samples and backgrounds
+        "hhh_sm":["hhh_4b2w2l2nu_c30_d40",],
+        "hhh_bsm": ["hhh_4b2w2l2nu_c30_d499", "hhh_4b2w2l2nu_c30_d4m1",
+                    "hhh_4b2w2l2nu_c319_d419", "hhh_4b2w2l2nu_c31_d40", "hhh_4b2w2l2nu_c31_d42",
+                    "hhh_4b2w2l2nu_c32_d4m1", "hhh_4b2w2l2nu_c34_d49", "hhh_4b2w2l2nu_c3m1_d40",
+                    "hhh_4b2w2l2nu_c3m1_d4m1", "hhh_4b2w2l2nu_c3m1p5_d4m0p5",],
+        "hhh_background": ["st", "dy", "vv", "tt", "hh_sm", "h"],
         # Collection of VBF samples with most shape and rate difference
         "gen_vbf": [
             "hh_vbf_hbb_hww2l2nu_kvm0p758_k2v1p44_klm19p3",
@@ -372,20 +384,20 @@ def set_config_defaults_and_groups(config_inst):
             "sr__1mu__ml_tt", "sr__1mu__ml_st", "sr__1mu__ml_v_lep",
         ),
         # Dilepton
-        "SR_bjets_incl": bracket_expansion(["sr__ml_{signal_ggf2,sig_ggf,hh_ggf_hbb_hvv2l2nu_kl1_kt1,hh_ggf_kl1_kt1}"]),
-        "vbfSR_bjets_incl": bracket_expansion(["sr__ml_{signal_vbf2,sig_vbf,hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1,hh_vbf_kv1_k2v1_kl1}"]),  # noqa: E501
-        "SR_dl": bracket_expansion(["sr__{1b,2b}__ml_{signal_ggf2,sig_ggf,hh_ggf_hbb_hvv2l2nu_kl1_kt1,hh_ggf_kl1_kt1}"]),  # noqa: E501
-        "vbfSR_dl": bracket_expansion(["sr__{1b,2b}__ml_{signal_vbf2,sig_vbf,hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1,hh_vbf_kv1_k2v1_kl1}"]),  # noqa: E501
-        "SR_dl_resolved": bracket_expansion(["sr__resolved__{1b,2b}__ml_{signal_ggf2,sig_ggf,hh_ggf_hbb_hvv2l2nu_kl1_kt1,hh_ggf_kl1_kt1}"]),  # noqa: E501
-        "vbfSR_dl_resolved": bracket_expansion(["sr__resolved__{1b,2b}__ml_{signal_vbf2,sig_vbf,hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1,hh_vbf_kv1_k2v1_kl1}"]),  # noqa: E501
+        # "SR_bjets_incl": bracket_expansion(["sr__ml_{signal_ggf2,sig_ggf,hh_ggf_hbb_hvv2l2nu_kl1_kt1,hh_ggf_kl1_kt1}"]),
+        # "vbfSR_bjets_incl": bracket_expansion(["sr__ml_{signal_vbf2,sig_vbf,hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1,hh_vbf_kv1_k2v1_kl1}"]),  # noqa: E501
+        "SR_dl": bracket_expansion(["sr__{2b,3b,4b}__ml_{sig_all}"]),  # noqa: E501
+        # "vbfSR_dl": bracket_expansion(["sr__{1b,2b}__ml_{signal_vbf2,sig_vbf,hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1,hh_vbf_kv1_k2v1_kl1}"]),  # noqa: E501
+        # "SR_dl_resolved": bracket_expansion(["sr__resolved__{1b,2b}__ml_{signal_ggf2,sig_ggf,hh_ggf_hbb_hvv2l2nu_kl1_kt1,hh_ggf_kl1_kt1}"]),  # noqa: E501
+        # "vbfSR_dl_resolved": bracket_expansion(["sr__resolved__{1b,2b}__ml_{signal_vbf2,sig_vbf,hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1,hh_vbf_kv1_k2v1_kl1}"]),  # noqa: E501
         # "SR_1b_dl": bracket_expansion(["sr__1b__ml_{signal_ggf2,sig_ggf,hh_ggf_hbb_hvv2l2nu_kl1_kt1,hh_ggf_kl1_kt1}"]),  # noqa: E501
         # "vbfSR_1b_dl": bracket_expansion(["sr__1b__ml_{signal_vbf2,sig_vbf,hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1,hh_vbf_kv1_k2v1_kl1}"]),  # noqa: E501
         # "SR_2b_dl_resolved": bracket_expansion(["sr__resolved__2b__ml_{signal_ggf2,sig_ggf,hh_ggf_hbb_hvv2l2nu_kl1_kt1,hh_ggf_kl1_kt1}"]),  # noqa: E501
         # "vbfSR_2b_dl_resolved": bracket_expansion(["sr__resolved__2b__ml_{signal_vbf2,sig_vbf,hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1,hh_vbf_kv1_k2v1_kl1}"]),  # noqa: E501
-        "SR_dl_boosted": bracket_expansion(["sr__boosted__ml_{signal_ggf2,sig_ggf,hh_ggf_hbb_hvv2l2nu_kl1_kt1,hh_ggf_kl1_kt1}"]),  # noqa: E501
-        "vbfSR_dl_boosted": bracket_expansion(["sr__boosted__ml_{signal_vbf2,sig_vbf,hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1,hh_vbf_kv1_k2v1_kl1}"]),  # noqa: E501
-        "BR_dl": bracket_expansion(["sr__{resolved__1b,resolved__2b,boosted,1b,2b}__ml_{bkg,tt,st,dy,dy_m10toinf,h}"]),
-        "BR_bjets_incl": bracket_expansion(["sr__ml_{tt,st,dy,dy_m10toinf,h}"]),
+        # "SR_dl_boosted": bracket_expansion(["sr__boosted__ml_{signal_ggf2,sig_ggf,hh_ggf_hbb_hvv2l2nu_kl1_kt1,hh_ggf_kl1_kt1}"]),  # noqa: E501
+        # "vbfSR_dl_boosted": bracket_expansion(["sr__boosted__ml_{signal_vbf2,sig_vbf,hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1,hh_vbf_kv1_k2v1_kl1}"]),  # noqa: E501
+        "BR_dl": bracket_expansion(["sr__{resolved__1b,resolved__2b,boosted,2b,3b,4b}__ml_{tt,st,dy,h}"]),
+        # "BR_bjets_incl": bracket_expansion(["sr__ml_{tt,st,dy,dy_m10toinf,h}"]),
     }
 
     # variable groups for conveniently looping over certain variables
@@ -663,13 +675,9 @@ def set_config_defaults_and_groups(config_inst):
             # var: {"rebin": 100}
             var: {"rebin": 4}
             for var in [
-                "rebinlogit_mlscore.sig_ggf_binary",
-                "rebinlogit_mlscore.sig_vbf_binary",
+                "rebinlogit_mlscore.sig_all",
                 "mlscore.max_score",
-                "mlscore.sig_ggf_binary",
-                "mlscore.sig_vbf_binary",
-                "mlscore.sig_ggf",
-                "mlscore.sig_vbf",
+                "mlscore.sig_all",
                 "mlscore.tt",
                 "mlscore.st",
                 "mlscore.dy_m10toinf",
@@ -831,52 +839,50 @@ def set_config_defaults_and_groups(config_inst):
         # "vbfSR_sl_boosted": 3,
         # Dilepton
         "BR_dl": 1,
-        "sr__resolved__1b__ml_sig_ggf": 10,
-        "sr__resolved__2b__ml_sig_ggf": 6,
-        "sr__resolved__1b__ml_sig_vbf": 8,
-        "sr__resolved__2b__ml_sig_vbf": 6,
-        "sr__1b__ml_sig_ggf": 10,
-        "sr__2b__ml_sig_ggf": 6,
-        "sr__1b__ml_sig_vbf": 8,
-        "sr__2b__ml_sig_vbf": 6,
-        "sr__boosted__ml_sig_ggf": 3,
-        "sr__boosted__ml_sig_vbf": 3,
-        "sr__boosted": 3,
+        "SR_dl": 10,
+        # "sr__resolved__1b__ml_sig_ggf": 10,
+        # "sr__resolved__2b__ml_sig_ggf": 6,
+        # "sr__resolved__1b__ml_sig_vbf": 8,
+        # "sr__resolved__2b__ml_sig_vbf": 6,
+        # "sr__1b__ml_sig_ggf": 10,
+        # "sr__2b__ml_sig_ggf": 6,
+        # "sr__1b__ml_sig_vbf": 8,
+        # "sr__2b__ml_sig_vbf": 6,
+        # "sr__boosted__ml_sig_ggf": 3,
+        # "sr__boosted__ml_sig_vbf": 3,
+        # "sr__boosted": 3,
     }
 
-    is_signal_sm = lambda proc_name: "kl1_kt1" in proc_name or "kv1_k2v1_kl1" in proc_name
-    is_signal_sm_ggf = lambda proc_name: "kl1_kt1" in proc_name
-    is_signal_sm_vbf = lambda proc_name: "kv1_k2v1_kl1" in proc_name
+    # is_signal_sm = lambda proc_name: "kl1_kt1" in proc_name or "kv1_k2v1_kl1" in proc_name
+    is_signal_sm_ggf = lambda proc_name: "hhh_4b2w2l2nu_c30_d40" in proc_name
+    # is_signal_sm_vbf = lambda proc_name: "kv1_k2v1_kl1" in proc_name
     # is_gghh_sm = lambda proc_name: "kl1_kt1" in proc_name
     # is_qqhh_sm = lambda proc_name: "kv1_k2v1_kl1" in proc_name
     # is_signal_ggf_kl1 = lambda proc_name: "kl1_kt1" in proc_name and "hh_ggf" in proc_name
     # is_signal_vbf_kl1 = lambda proc_name: "kv1_k2v1_kl1" in proc_name and "hh_vbf" in proc_name
-    is_background = lambda proc_name: (
-        "hbb_hvv" not in proc_name and "hbb_hww" not in proc_name and
-        "hbb_hzz" not in proc_name and "hbb_htt" not in proc_name
-    )
+    is_background = lambda proc_name: "hhh" not in proc_name
 
     config_inst.x.inference_category_rebin_processes = {
         # Single lepton
-        "SR_sl": is_signal_sm_ggf,
-        "vbfSR_sl": is_signal_sm_vbf,
-        "SR_sl_resolved": is_signal_sm,
-        "SR_sl_boosted": is_signal_sm,
-        "vbfSR_sl_resolved": is_signal_sm,
-        "vbfSR_sl_boosted": is_signal_sm,
-        "BR_sl": is_background,
+        # "SR_sl": is_signal_sm_ggf,
+        # "vbfSR_sl": is_signal_sm_vbf,
+        # "SR_sl_resolved": is_signal_sm,
+        # "SR_sl_boosted": is_signal_sm,
+        # "vbfSR_sl_resolved": is_signal_sm,
+        # "vbfSR_sl_boosted": is_signal_sm,
+        # "BR_sl": is_background,
         # Dilepton
         "SR_dl": is_signal_sm_ggf,
-        "vbfSR_dl": is_signal_sm_vbf,
+        # "vbfSR_dl": is_signal_sm_vbf,
         "BR_dl": is_background,
-        "SR_bjets_incl": is_signal_sm_ggf,
-        "vbfSR_bjets_incl": is_signal_sm_vbf,
-        "BR_bjets_incl": is_background,
-        "SR_dl_resolved": is_signal_sm_ggf,
-        "SR_dl_boosted": is_signal_sm_ggf,
-        "vbfSR_dl_resolved": is_signal_sm_vbf,
-        "vbfSR_dl_boosted": is_signal_sm_vbf,
-        "sr__1b": is_signal_sm_ggf,
-        "sr__2b": is_signal_sm_ggf,
-        "sr__boosted": is_signal_sm_vbf,
+        # "SR_bjets_incl": is_signal_sm_ggf,
+        # "vbfSR_bjets_incl": is_signal_sm_vbf,
+        # "BR_bjets_incl": is_background,
+        # "SR_dl_resolved": is_signal_sm_ggf,
+        # "SR_dl_boosted": is_signal_sm_ggf,
+        # "vbfSR_dl_resolved": is_signal_sm_vbf,
+        # "vbfSR_dl_boosted": is_signal_sm_vbf,
+        # "sr__1b": is_signal_sm_ggf,
+        # "sr__2b": is_signal_sm_ggf,
+        # "sr__boosted": is_signal_sm_vbf,
     }

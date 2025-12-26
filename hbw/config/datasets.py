@@ -88,6 +88,10 @@ def hbw_dataset_names(config: od.Config, as_list: bool = False) -> DotDict[str: 
         "data": data_datasets,
         "data_met": config.x.if_era(cfg_tag="is_for_sf", values=data_met_datasets),
         "tt": ["tt_sl_powheg", "tt_dl_powheg", "tt_fh_powheg"],
+        "hhh": ["hhh_4b2w2l2nu_c30_d40_amcatnlo", "hhh_4b2w2l2nu_c30_d499_amcatnlo", "hhh_4b2w2l2nu_c30_d4m1_amcatnlo",
+                "hhh_4b2w2l2nu_c319_d419_amcatnlo", "hhh_4b2w2l2nu_c31_d40_amcatnlo", "hhh_4b2w2l2nu_c31_d42_amcatnlo",
+                "hhh_4b2w2l2nu_c32_d4m1_amcatnlo", "hhh_4b2w2l2nu_c34_d49_amcatnlo", "hhh_4b2w2l2nu_c3m1_d40_amcatnlo",
+                "hhh_4b2w2l2nu_c3m1_d4m1_amcatnlo", "hhh_4b2w2l2nu_c3m1p5_d4m0p5_amcatnlo"],
         "st": [
             "st_schannel_t_lep_4f_amcatnlo",
             "st_schannel_tbar_lep_4f_amcatnlo",
@@ -203,7 +207,7 @@ def hbw_dataset_names(config: od.Config, as_list: bool = False) -> DotDict[str: 
                 # "h_ggf_hbb_powheg",  # empty in DL (< 0.01 events in postEE)
                 "h_ggf_hww2l2nu_powheg",
                 "h_ggf_hzz2l2q_powheg",
-                "h_vbf_hbb_powheg",
+                # "h_vbf_hbb_powheg",
                 "h_vbf_hww2l2nu_powheg",
                 # "h_ggf_hzg_zll_powheg",  # probably empty in DL SR
                 "zh_zqq_hbb_powheg",

@@ -369,8 +369,8 @@ class PlotPostfitShapes(
         1. Primary: existence of substrings ggf, vbf, tt, st, dy, h
         2. Secondary: existence of substrings 1b, 2b, boosted
         """
-        primary_order = ["sig_ggf", "sig_vbf", "tt", "st", "dy", "h"]
-        secondary_order = ["1b", "2b", "boosted"]
+        primary_order = ["sig_all", "tt", "st", "dy", "h"]
+        secondary_order = ["1b", "2b", "3b", "4b", "boosted"]
 
         def sort_key(item):
             # Primary sort: find first matching substring from primary_order

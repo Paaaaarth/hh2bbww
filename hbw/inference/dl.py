@@ -28,94 +28,26 @@ if use_old_version:
 # All categories to be included in the final datacard
 config_categories = DotDict({
     "default": [
-        "sr__1b__ml_sig_ggf",
-        "sr__1b__ml_sig_vbf",
-        "sr__1b__ml_tt",
-        "sr__1b__ml_st",
-        "sr__1b__ml_dy_m10toinf",
-        "sr__1b__ml_h",
-        "sr__2b__ml_sig_ggf",
-        "sr__2b__ml_sig_vbf",
-        "sr__2b__ml_tt",
-        "sr__2b__ml_st",
-        "sr__2b__ml_dy_m10toinf",
-        "sr__2b__ml_h",
-    ],
-    "sr": [
-        "sr__1b__ml_sig_ggf",
-        "sr__1b__ml_sig_vbf",
-        "sr__2b__ml_sig_ggf",
-        "sr__2b__ml_sig_vbf",
-    ],
-    "sr_splitvbf": [
-        "sr__1b__ml_sig_ggf",
-        "sr__2b__ml_sig_ggf",
-        "sr__resolved__1b__ml_sig_vbf",
-        "sr__resolved__2b__ml_sig_vbf",
-        "sr__boosted__ml_sig_vbf",
-    ],
-    "sr_boosted": [
-        "sr__boosted__ml_sig_ggf",
-        "sr__boosted__ml_sig_vbf",
-    ],
-    "sr_resolved": [
-        "sr__resolved__1b__ml_sig_ggf",
-        "sr__resolved__1b__ml_sig_vbf",
-        "sr__resolved__2b__ml_sig_ggf",
-        "sr__resolved__2b__ml_sig_vbf",
-    ],
-    "background": [
-        "sr__1b__ml_tt",
-        "sr__1b__ml_st",
-        "sr__1b__ml_dy_m10toinf",
-        "sr__1b__ml_h",
-        "sr__2b__ml_tt",
-        "sr__2b__ml_st",
-        "sr__2b__ml_dy_m10toinf",
-        "sr__2b__ml_h",
-    ],
-    "background_split": [
-        "sr__resolved__1b__ml_tt",
-        "sr__resolved__1b__ml_st",
-        "sr__resolved__1b__ml_dy_m10toinf",
-        "sr__resolved__1b__ml_h",
-        "sr__resolved__2b__ml_tt",
-        "sr__resolved__2b__ml_st",
-        "sr__resolved__2b__ml_dy_m10toinf",
-        "sr__resolved__2b__ml_h",
-        "sr__boosted__ml_bkg",
-    ],
-    "background_resolved": [
-        "sr__resolved__1b__ml_tt",
-        "sr__resolved__1b__ml_st",
-        "sr__resolved__1b__ml_dy_m10toinf",
-        "sr__resolved__1b__ml_h",
-        "sr__resolved__2b__ml_tt",
-        "sr__resolved__2b__ml_st",
-        "sr__resolved__2b__ml_dy_m10toinf",
-        "sr__resolved__2b__ml_h",
-    ],
-    "no_nn_cats": [
-        "sr__1b",
-        "sr__2b",
-    ],
-    "no_nn_cats_with_boosted": [
-        "sr__resolved__1b",
-        "sr__resolved__2b",
-        "sr__boosted",
-    ],
-    "bjet_incl": [
-        "sr__ml_sig_ggf",
-        "sr__ml_sig_vbf",
-        "sr__ml_tt",
-        "sr__ml_st",
-        "sr__ml_dy",
-        "sr__ml_h",
+        "sr_2b_exact_ml_sig_all",
+        "sr_2b_exact_ml_dy",
+        "sr_2b_exact_ml_tt",
+        "sr_2b_exact_ml_st",
+        "sr_2b_exact_ml_h",
+        "sr_3b_exact_ml_sig_all",
+        "sr_3b_exact_ml_dy",
+        "sr_3b_exact_ml_tt",
+        "sr_3b_exact_ml_st",
+        "sr_3b_exact_ml_h",
+        "sr_4b_ml_sig_all",
+        "sr_4b_ml_dy",
+        "sr_4b_ml_tt",
+        "sr_4b_ml_st",
+        "sr_4b_ml_h",
     ],
 })
-config_categories.default_boosted = (
-    config_categories.sr_resolved + config_categories.sr_boosted + config_categories.background_resolved
-)
+# config_categories.default_boosted = (
+#     config_categories.sr_resolved + config_categories.sr_boosted + config_categories.background_resolved
+# )
 
 
 systematics = DotDict({
@@ -490,6 +422,21 @@ processes_dict = {
     "hwwzztt": [*backgrounds, *hhprocs("hbb_hww"), *hhprocs("hbb_hzz"), *hhprocs("hbb_htt")],
     "hwwzztt_skip_dy": [*backgrounds_skip_dy, *hhprocs("hbb_hww"), *hhprocs("hbb_hzz"), *hhprocs("hbb_htt")],
     "hwwzztt_ggf": [*backgrounds, *hhprocs_ggf("hbb_hww"), *hhprocs_ggf("hbb_hzz"), *hhprocs_ggf("hbb_htt")],
+    "hhh": [
+        # Add signal processes here
+        "hhh_4b2w2l2nu_c30_d40",
+        "hhh_4b2w2l2nu_c30_d499", "hhh_4b2w2l2nu_c30_d4m1",
+        "hhh_4b2w2l2nu_c319_d419", "hhh_4b2w2l2nu_c31_d40", "hhh_4b2w2l2nu_c31_d42",
+        "hhh_4b2w2l2nu_c32_d4m1", "hhh_4b2w2l2nu_c34_d49", "hhh_4b2w2l2nu_c3m1_d40",
+        "hhh_4b2w2l2nu_c3m1_d4m1", "hhh_4b2w2l2nu_c3m1p5_d4m0p5",
+        "st_twchannel",
+        "tt",
+        "ttz",
+        "dy",
+        "vv",
+        "h_ggf", "h_vbf", "zh", "wh", "zh_gg", "tth",
+        ]
+
 }
 
 from hbw.ml.derived.dl import input_features
@@ -521,7 +468,7 @@ def config_variable_binary_ggf_and_vbf(self, config_cat_inst):
 
 default_cls_dict = {
     "ml_model_name": ml_model_name,
-    "processes": processes_dict["hwwzztt"],
+    "processes": processes_dict["hhh"],
     "config_categories": config_categories.default,
     "systematics": systematics.rate,
     "config_variable": config_variable_binary_ggf_and_vbf,
@@ -534,262 +481,13 @@ dl = HBWInferenceModelBase.derive("dl", cls_dict=default_cls_dict)
 #
 # currently "final" inference models
 #
-
-rate_only = dl.derive("rate_only", cls_dict={
-    "systematics": systematics.rate_default,
-    "config_categories": config_categories.default_boosted,
-})
-default = dl.derive("default", cls_dict={
+dl_22post_multi_binary = dl.derive("dl_22post_multi_binary", cls_dict={
+    "ml_model_name": ["dl_22post_multi", "dl_22post_binary"],
+    "config_variable": lambda self, config_cat_inst: "logit_mlscore.sig_binary",
     "systematics": systematics.default,
-    "config_categories": config_categories.default_boosted,
 })
-test_bkgs = dl.derive("test_bkgs", cls_dict={
+dl_22pre_multi_binary = dl.derive("dl_22pre_multi_binary", cls_dict={
+    "ml_model_name": ["dl_22pre_multi", "dl_22pre_binary"],
+    "config_variable": lambda self, config_cat_inst: "logit_mlscore.sig_binary",
     "systematics": systematics.default,
-    "config_categories": config_categories.background,
-})
-
-no_boosted = dl.derive("no_boosted", cls_dict={
-    "systematics": systematics.default,
-    "config_categories": config_categories.sr + config_categories.background,
-    "unblind": True,
-    "skip_data": False,
-})
-default_unblind = dl.derive("default_unblind", cls_dict={
-    "systematics": systematics.default,
-    "config_categories": config_categories.default_boosted,
-    "unblind": True,
-    "skip_data": False,
-})
-mbbllmet = default_unblind.derive("mbbllmet", cls_dict={
-    "config_variable": lambda self, config_cat_inst: "mli_mbbllMET",
-    "config_categories": ["sr", "sr__resolved__1b", "sr__resolved__2b", "sr__boosted"],
-})
-met40dnn_unblind = default_unblind.derive("met40dnn_unblind", cls_dict={
-    "ml_model_name": ["multiclass_met40", "ggf_met40", "vbf_met40"],
-})
-vbftag_unblind = default_unblind.derive("vbftag_unblind", cls_dict={
-    "ml_model_name": ["multiclassv3_tag", "ggfv3", "vbfv3_tag"],
-})
-vbftag1_unblind = default_unblind.derive("vbftag1_unblind", cls_dict={
-    "ml_model_name": ["multiclassv3", "ggfv3", "vbfv3_tag"],
-})
-vbftag1_noboosted_unblind = no_boosted.derive("vbftag1_noboosted_unblind", cls_dict={
-    "ml_model_name": ["multiclassv3", "ggfv3", "vbfv3_tag"],
-})
-vbftag1_mergeboosted_unblind = default_unblind.derive("vbftag1_mergeboosted_unblind", cls_dict={
-    "ml_model_name": ["multiclassv3", "ggfv3", "vbfv3_tag"],
-    "config_categories": config_categories.sr_resolved + ["sr__boosted"] + config_categories.background_resolved,
-})
-vbfmqq_unblind = default_unblind.derive("vbfmqq_unblind", cls_dict={
-    "ml_model_name": ["multiclassv3_mqq", "ggfv3", "vbfv3_mqq"],
-})
-vbfmqq1_unblind = default_unblind.derive("vbfmqq1_unblind", cls_dict={
-    "ml_model_name": ["multiclassv3", "ggfv3", "vbfv3_mqq"],
-})
-vbfextended_unblind = default_unblind.derive("vbfextended_unblind", cls_dict={
-    "ml_model_name": ["multiclassv3", "ggfv3", "vbfv3_vbf_extended"],
-})
-default_data = dl.derive("default_data", cls_dict={
-    "systematics": systematics.default,
-    "config_categories": config_categories.default_boosted,
-    "skip_data": False,
-})
-vbftag_data = default_data.derive("vbftag_data", cls_dict={
-    "ml_model_name": ["multiclassv3_tag", "ggfv3", "vbfv3_tag"],
-})
-vbfmqq_data = default_data.derive("vbfmqq_data", cls_dict={
-    "ml_model_name": ["multiclassv3_mqq", "ggfv3", "vbfv3_mqq"],
-})
-vbfmqq1_data = default_data.derive("vbfmqq1_data", cls_dict={
-    "ml_model_name": ["multiclassv3", "ggfv3", "vbfv3_mqq"],
-})
-vbftag1_data = default_data.derive("vbftag1_data", cls_dict={
-    "ml_model_name": ["multiclassv3", "ggfv3", "vbfv3_tag"],
-})
-vbfextended_data = default_data.derive("vbfextended_data", cls_dict={
-    "ml_model_name": ["multiclassv3", "ggfv3", "vbfv3_vbf_extended"],
-})
-
-vbfmqq_data_cpn_corr = default_data.derive("vbfmqq_data_cpn_corr", cls_dict={
-    "systematics": systematics.default_cpn_corr,
-    "ml_model_name": ["multiclassv3_mqq", "ggfv3", "vbfv3_mqq"],
-})
-vbfmqq_data_year_uncorr = default_data.derive("vbfmqq_data_year_uncorr", cls_dict={
-    "systematics": systematics.default_year_uncorr,
-    "ml_model_name": ["multiclassv3_mqq", "ggfv3", "vbfv3_mqq"],
-})
-mli_n_jet = default_data.derive("mli_n_jet", cls_dict={
-    "processes": processes_dict["hww"],
-    # "ml_model_name": [],
-    "multi_variables": False,
-    "config_categories": config_categories.no_nn_cats_with_boosted,
-    "config_variable": lambda self, config_cat_inst: "mli_n_jet",
-})
-mli = default_data.derive("mli", cls_dict={
-    "processes": processes_dict["hww"],
-    # "ml_model_name": [],
-    "multi_variables": True,
-    "config_categories": config_categories.no_nn_cats_with_boosted,
-    "config_variable": lambda self, config_cat_inst: mli_inputs,
-})
-
-
-#
-# other inference models for testing and systematics studies
-#
-
-dl_kl1_dnn = dl.derive("dl_kl1_dnn", cls_dict={
-    "config_categories": [
-        "sr__1b__ml_hh_ggf_kl1_kt1",
-        "sr__1b__ml_hh_vbf_kv1_k2v1_kl1",
-        "sr__2b__ml_hh_ggf_kl1_kt1",
-        "sr__2b__ml_hh_vbf_kv1_k2v1_kl1",
-    ] + config_categories.background,
-    "ml_model_name": ["multiclass_kl1", "ggf_kl1", "vbf_kl1"],
-})
-dl_boosted = dl.derive("dl_boosted", cls_dict={
-    "config_categories": config_categories.sr_resolved + config_categories.sr_boosted + config_categories.background,
-})
-dl_boosted_skip_dy10 = dl.derive("dl_boosted_skip_dy10", cls_dict={
-    "config_categories": config_categories.sr_resolved + config_categories.sr_boosted + config_categories.background,
-    "skip_datasets": {"dy_hf": "dy_m10to50_amcatnlo", "dy_lf": "dy_m10to50_amcatnlo"},
-})
-dl_boosted_skip_dy = dl.derive("dl_boosted_skip_dy", cls_dict={
-    "processes": processes_dict["hwwzztt_skip_dy"],
-    "config_categories": config_categories.sr_resolved + config_categories.sr_boosted + config_categories.background,
-})
-dl_boosted1 = dl.derive("dl_boosted1", cls_dict={
-    "config_categories": config_categories.default_boosted,
-})
-dl1 = HBWInferenceModelBase.derive("dl1", cls_dict=default_cls_dict)
-dl_skip_mc_stats = dl.derive("dl_skip_mc_stats", cls_dict={
-    "mc_stats": False,
-})
-dl_skip_dy_m4to10 = dl.derive("dl_skip_dy_m4to10", cls_dict={
-    "skip_datasets": {"dy": "dy_m4to10_amcatnlo"},
-})
-dl_test = HBWInferenceModelBase.derive("dl_test", cls_dict=default_cls_dict)
-dl_bkg_cats = dl.derive("dl_bkg_cats", cls_dict={"config_categories": config_categories.background})
-dl_syst = dl.derive("dl_syst", cls_dict={"systematics": systematics.shape})
-dl_syst1 = dl.derive("dl_syst1", cls_dict={"systematics": systematics.shape})
-dl_jerc_only = dl.derive("dl_jerc_only", cls_dict={"systematics": systematics.jerc_only})
-dl_jerc = dl.derive("dl_jerc", cls_dict={"systematics": systematics.jerc})
-dl_jerc_boosted = dl.derive("dl_jerc_boosted", cls_dict={
-    "systematics": systematics.jerc,
-    "config_categories": config_categories.sr_resolved + config_categories.sr_boosted + config_categories.background,
-})
-dl_jerc1_boosted = dl.derive("dl_jerc1_boosted", cls_dict={
-    "systematics": systematics.jerc1,
-    "config_categories": config_categories.sr_resolved + config_categories.sr_boosted + config_categories.background,
-})
-dl_jerc2_boosted = dl.derive("dl_jerc2_boosted", cls_dict={
-    "systematics": systematics.jerc2,
-    "config_categories": config_categories.sr_resolved + config_categories.sr_boosted + config_categories.background,
-})
-dl_jerc3_boosted = dl.derive("dl_jerc3_boosted", cls_dict={
-    "systematics": systematics.jerc3,
-    "config_categories": config_categories.sr_resolved + config_categories.sr_boosted + config_categories.background,
-})
-dl_jerc4_boosted = dl.derive("dl_jerc4_boosted", cls_dict={
-    "systematics": systematics.jerc4,
-    "config_categories": config_categories.sr_resolved + config_categories.sr_boosted + config_categories.background,
-})
-dl_jerc4_boosted1 = dl.derive("dl_jerc4_boosted1", cls_dict={
-    "systematics": systematics.jerc4,
-    "config_categories": config_categories.default_boosted,
-})
-dl_jerc1_boosted_data = dl.derive("dl_jerc1_boosted_data", cls_dict={
-    "systematics": systematics.jerc1,
-    "config_categories": config_categories.sr_resolved + config_categories.sr_boosted + config_categories.background,
-    "skip_data": False,
-})
-dl_jerc3_boosted_data = dl.derive("dl_jerc3_boosted_data", cls_dict={
-    "systematics": systematics.jerc3,
-    "config_categories": config_categories.sr_resolved + config_categories.sr_boosted + config_categories.background,
-    "skip_data": False,
-})
-dl_jerc4_boosted_data = dl.derive("dl_jerc4_boosted_data", cls_dict={
-    "systematics": systematics.jerc4,
-    "config_categories": config_categories.sr_resolved + config_categories.sr_boosted + config_categories.background,
-    "skip_data": False,
-})
-dl_jerc3_boosted1_data = dl.derive("dl_jerc3_boosted1_data", cls_dict={
-    "systematics": systematics.jerc3,
-    "config_categories": config_categories.sr_resolved + config_categories.sr_boosted + config_categories.background_split,  # noqa: E501
-    "skip_data": False,
-})
-dl_jerc4_boosted1_data = dl.derive("dl_jerc4_boosted1_data", cls_dict={
-    "systematics": systematics.jerc4,
-    "config_categories": config_categories.sr_resolved + config_categories.sr_boosted + config_categories.background_split,  # noqa: E501
-    "skip_data": False,
-})
-dl_jerc_boosted_bjet_uncorr1 = dl.derive("dl_jerc_boosted_bjet_uncorr1", cls_dict={
-    "systematics": systematics.jerc_bjet_uncorr1,
-    "config_categories": config_categories.sr_resolved + config_categories.sr_boosted + config_categories.background,
-})
-dl_jerc_boosted_bjet_uncorr1_data = dl.derive("dl_jerc_boosted_bjet_uncorr1_data", cls_dict={
-    "systematics": systematics.jerc_bjet_uncorr1,
-    "config_categories": config_categories.sr_resolved + config_categories.sr_boosted + config_categories.background,
-    "skip_data": False,
-})
-dl_jerc1 = dl.derive("dl_jerc1", cls_dict={"systematics": systematics.jerc1})
-dl_jerc_bjet_uncorr = dl.derive("dl_jerc_bjet_uncorr", cls_dict={"systematics": systematics.jerc_bjet_uncorr})
-dl_jerc_bjet_uncorr1 = dl.derive("dl_jerc_bjet_uncorr1", cls_dict={"systematics": systematics.jerc_bjet_uncorr1})
-dl_data = dl.derive("dl_data", cls_dict={
-    "config_categories": config_categories.background,
-    "systematics": systematics.jerc,
-    "skip_data": False,
-})
-dl_data_full = dl.derive("dl_data_full", cls_dict={
-    # NOTE: needs to be run with --hist-hooks blind !!!!
-    "config_categories": config_categories.default,
-    "systematics": systematics.jerc,
-    "skip_data": False,
-})
-dl_data_test = dl.derive("dl_data_test", cls_dict={
-    "config_categories": config_categories.default,
-    "systematics": systematics.rate,
-    "skip_data": False,
-})
-
-# testing models
-no_nn_cats = dl.derive("no_nn_cats", cls_dict={
-    "processes": processes_dict["hwwzztt"],
-    "systematics": systematics.jerc,
-    "config_categories": config_categories.no_nn_cats,
-})
-bjet_incl = dl.derive("bjet_incl", cls_dict={
-    "processes": processes_dict["hwwzztt"],
-    "systematics": systematics.jerc,
-    "config_categories": config_categories.bjet_incl,
-})
-test_pdf = dl.derive("test_pdf", cls_dict={
-    "processes": processes_dict["test"],
-    "systematics": systematics.rate + ["pdf_shape_tt"],
-})
-test_jec = dl.derive("test_jec", cls_dict={
-    "processes": processes_dict["test"],
-    "systematics": systematics.rate + ["jec_Total"],
-})
-only_sig = dl_jerc1_boosted_data.derive("only_sig", cls_dict={
-    "processes": processes_dict["hww2l2nu"],
-    "ml_model_name": [],
-    "multi_variables": True,
-    "config_categories": config_categories.no_nn_cats,
-    "config_variable": lambda self, config_cat_inst: mli_inputs,
-})
-test = dl_jerc1_boosted_data.derive("test", cls_dict={
-    "processes": processes_dict["hww2l2nu"],
-    "ml_model_name": [],
-    "multi_variables": True,
-    "config_categories": config_categories.no_nn_cats,
-    "config_variable": lambda self, config_cat_inst: mli_inputs,
-    "systematics": [],
-})
-dl_mli_inputs = dl_jerc1_boosted_data.derive("dl_mli_inputs", cls_dict={
-    "processes": processes_dict["hww2l2nu"],
-    "ml_model_name": [],
-    "multi_variables": True,
-    "config_categories": config_categories.no_nn_cats,
-    "config_variable": lambda self, config_cat_inst: mli_inputs,
 })

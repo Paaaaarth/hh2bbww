@@ -96,7 +96,7 @@ setup_hbw() {
     export CF_CONDA_BASE="${CF_CONDA_BASE:-${CF_SOFTWARE_BASE}/conda}"
     export CF_VENV_BASE="${CF_VENV_BASE:-${CF_SOFTWARE_BASE}/venvs}"
     export CF_CMSSW_BASE="${CF_CMSSW_BASE:-${CF_SOFTWARE_BASE}/cmssw}"
-    export HBW_LAW_CONFIG="${HBW_LAW_CONFIG:-law.dl.nocert.cfg}"
+    export HBW_LAW_CONFIG="${HBW_LAW_CONFIG:-law.hhh.cfg}"
     export LAW_CONFIG_FILE="${LAW_CONFIG_FILE:-${HBW_BASE}/${HBW_LAW_CONFIG}}"
 
     #
@@ -149,7 +149,7 @@ main() {
 
     # run the actual setup
     if setup_hbw "$@"; then
-        cf_color green "HH -> bbWW analysis successfully setup"
+        cf_color green "HHH -> bbbbWW analysis successfully setup"
         return "0"
     else
         local code="$?"

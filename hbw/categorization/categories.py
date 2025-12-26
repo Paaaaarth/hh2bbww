@@ -197,19 +197,19 @@ def catid_lowmet(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Arra
 
 @categorizer(uses={"mll"})
 def catid_mll_low(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    mask = (events.mll >= 20) & (events.mll < 70)
+    mask = (events.mll >= 20) & (events.mll < 81)
     return events, mask
 
 
 @categorizer(uses={"mll"})
 def catid_cr(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    mask = (events.mll >= 70)
+    mask = (events.mll >= 81)
     return events, mask
 
 
 @categorizer(uses={"mll"})
 def catid_mll_z(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    mask = (events.mll >= 70) & (events.mll < 110)
+    mask = (events.mll >= 81) & (events.mll < 110)
     return events, mask
 
 
@@ -290,20 +290,28 @@ def catid_ge2b_loose(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.
 
 
 @categorizer(uses={BTAG_COLUMN("Jet")})
-def catid_1b(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
-    btag_column = self.config_inst.x.btag_column
-    btag_wp_score = self.config_inst.x.btag_wp_score
-    n_deepjet = ak.sum(events.Jet[btag_column] >= btag_wp_score, axis=-1)
-    mask = (n_deepjet <= 1)
-    return events, mask
-
-
-@categorizer(uses={BTAG_COLUMN("Jet")})
 def catid_2b(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
     btag_column = self.config_inst.x.btag_column
     btag_wp_score = self.config_inst.x.btag_wp_score
     n_deepjet = ak.sum(events.Jet[btag_column] >= btag_wp_score, axis=-1)
-    mask = (n_deepjet >= 2)
+    mask = (n_deepjet == 2)
+    return events, mask
+
+
+@categorizer(uses={BTAG_COLUMN("Jet")})
+def catid_3b(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    btag_column = self.config_inst.x.btag_column
+    btag_wp_score = self.config_inst.x.btag_wp_score
+    n_deepjet = ak.sum(events.Jet[btag_column] >= btag_wp_score, axis=-1)
+    mask = (n_deepjet == 3)
+    return events, mask
+
+@categorizer(uses={BTAG_COLUMN("Jet")})
+def catid_4b(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, ak.Array]:
+    btag_column = self.config_inst.x.btag_column
+    btag_wp_score = self.config_inst.x.btag_wp_score
+    n_deepjet = ak.sum(events.Jet[btag_column] >= btag_wp_score, axis=-1)
+    mask = (n_deepjet >= 4)
     return events, mask
 
 #
@@ -313,8 +321,6 @@ def catid_2b(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, a
 
 # TODO: not hard-coded -> use config?
 ml_processes = [
-    "signal_ggf", "signal_ggf2", "signal_vbf", "signal_vbf2",
-    "signal_ggf4", "signal_ggf5", "signal_vbf4", "signal_vbf5",
     "hh_ggf_hbb_hvv_kl1_kt1", "hh_vbf_hbb_hvv_kv1_k2v1_kl1",
     "hh_ggf_hbb_hvvqqlnu_kl1_kt1", "hh_vbf_hbb_hvvqqlnu_kv1_k2v1_kl1",
     "hh_ggf_hbb_hvv2l2nu_kl1_kt1", "hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1",
@@ -323,7 +329,7 @@ ml_processes = [
     "dy_m10toinf",
     "dy_m50toinf", "tt_dl", "st_tchannel_t",
     "bkg_binary", "sig_ggf_binary", "sig_vbf_binary",
-    "sig_ggf", "sig_vbf",
+    "sig_all",
 ]
 for proc in ml_processes:
     @categorizer(
