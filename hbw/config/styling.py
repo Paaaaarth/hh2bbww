@@ -52,6 +52,14 @@ color_palette_1 = {
     "pink": "#f781bf",
     "grey": "#999999",
 }
+colors_pride = {
+    "red": "#E40303",
+    "orange": "#FF8C00",
+    "yellow": "#FFED00",
+    "green": "#008026",
+    "blue": "#004DFF",
+    "purple": "#750787",
+}
 
 color_palette = cms_color_palette_2
 
@@ -118,8 +126,11 @@ for decay in ("", "qqlnu", "2l2nu"):
 
 
 default_labels = {
-    "hh_ggf_hbb_htt_kl1_kt1": r"$HH_{ggf}^{\kappa_\lambda=1}$$\rightarrow bb\tau\tau$",
-    "hh_vbf_hbb_htt_kv1_k2v1_kl1": r"$HH_{vbf}^{1,1,1}$$\rightarrow bb\tau\tau$",
+    # "hh_ggf_hbb_htt_kl1_kt1": r"$HH_{ggf}^{\kappa_\lambda=1}$$\rightarrow bb\tau\tau$",
+    # "hh_vbf_hbb_htt_kv1_k2v1_kl1": r"$HH_{vbf}^{1,1,1}$$\rightarrow bb\tau\tau$",
+    "dy_hf": "DY+HF",
+    "dy_lf": "DY+LF",
+    "tt": r"$t\bar{t}$",
     "dy_m50toinf": "DY ($M > 50$)",
     "dy_m50toinf_0j": "DY ($M > 50$, 0 jets)",
     "dy_m50toinf_1j": "DY ($M > 50$, 1 jets)",
@@ -132,9 +143,18 @@ default_labels = {
     "st_twchannel_tbar_sl": r"tW ($\bar{t}$, sl)",
     "st_twchannel_t_dl": "tW (t, dl)",
     "st_twchannel_tbar_dl": r"tW ($\bar{t}$, dl)",
-    "w_lnu": r"$W \rightarrow \ell\nu$",
+    # "w_lnu": r"$W \rightarrow \ell\nu$",
+    "w_lnu": r"$W$",
     "ttv": r"$t\bar{t}V$",
-    # "hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1": r"hh_{vbf} (dl)",
+    # paper request: no couplings in labels for SM signals
+    "hh_ggf_kl1_kt1": r"$HH_{ggF}$",
+    "hh_vbf_kv1_k2v1_kl1": r"$HH_{VBF}$",
+    "hh_ggf_hbb_htt_kl1_kt1": r"$HH_{ggF}\rightarrow bb\tau\tau$",
+    "hh_vbf_hbb_htt_kv1_k2v1_kl1": r"$HH_{VBF}\rightarrow bb\tau\tau$",
+    "hh_ggf_hbb_hww_kl1_kt1": r"$HH_{ggF}\rightarrow bbWW$",
+    "hh_vbf_hbb_hww_kv1_k2v1_kl1": r"$HH_{VBF}\rightarrow bbWW$",
+    "hh_ggf_hbb_hzz_kl1_kt1": r"$HH_{ggF}\rightarrow bbZZ$",
+    "hh_vbf_hbb_hzz_kv1_k2v1_kl1": r"$HH_{VBF}\rightarrow bbZZ$",
 }
 
 ml_labels = {
@@ -153,7 +173,8 @@ ml_labels = {
     "graviton_hh_ggf_bbww_m600": "grav600",
     "graviton_hh_ggf_bbww_m750": "grav750",
     "graviton_hh_ggf_bbww_m1000": "grav1000",
-    "st": "st",
+    "st": "Single $t/\\bar{t}$",
+    # "st": "st",
     "w_lnu": "W",
     "dy": "DY",
     "h": "H",
