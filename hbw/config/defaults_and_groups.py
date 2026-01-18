@@ -122,15 +122,15 @@ def set_config_defaults_and_groups(config_inst):
     # config_inst.x.producer_groups = {
     #     "default": default_producers(None, config_inst, {}),
     # }
-    # config_inst.x.default_hist_producer = "with_trigger_weight"
+    config_inst.x.default_hist_producer = "with_trigger_weight"
     # config_inst.x.default_hist_producer = "with_dy_corr"
-    config_inst.x.default_hist_producer = "met_geq40_with_dy_corr"
+    # config_inst.x.default_hist_producer = "met_geq40_with_dy_corr"
     config_inst.x.default_ml_model = default_ml_model
     config_inst.x.default_inference_model = "default_unblind"
     # config_inst.x.default_categories = ["incl", "sr", "dycr", "ttcr"]
     config_inst.x.default_categories = ["incl", "sr", "2b", "3b", "4b"]
     config_inst.x.default_variables = ["jet0_pt", "mll", "n_jet", "ptll", "lepton0_pt", "lepton1_pt"]
-    config_inst.x.default_processes = ["hhh_sm", "hhh_fake", "hhh_background"]
+    config_inst.x.default_processes = ["hhh_sm", "hhh_fake", "hhh_bkg"]
 
     # general_settings default needs to be tuple (or dict) to be resolved correctly
     # config_inst.x.default_general_settings = ("data_mc_plots_blind_conservative",)
@@ -165,7 +165,7 @@ def set_config_defaults_and_groups(config_inst):
                     "hhh_4b2w2l2nu_c319_d419", "hhh_4b2w2l2nu_c31_d40", "hhh_4b2w2l2nu_c31_d42",
                     "hhh_4b2w2l2nu_c32_d4m1", "hhh_4b2w2l2nu_c34_d49", "hhh_4b2w2l2nu_c3m1_d40",
                     "hhh_4b2w2l2nu_c3m1_d4m1", "hhh_4b2w2l2nu_c3m1p5_d4m0p5",],
-        "hhh_background": ["st", "dy", "vv", "tt", "hh_sm", "h"],
+        "hhh_bkg": ["st", "dy", "vv", "tt", "hh_sm", "h"],
         # Collection of VBF samples with most shape and rate difference
         "gen_vbf": [
             "hh_vbf_hbb_hww2l2nu_kvm0p758_k2v1p44_klm19p3",

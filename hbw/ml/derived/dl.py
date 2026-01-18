@@ -478,7 +478,16 @@ dl_22pre_multi = DenseClassifierDL.derive("dl_22pre_multi", cls_dict={
     "class_factors": class_factors["ones"],
     "input_features": input_features["reduced"]})
 
-dl_22post_binary_sm = DenseClassifierDL.derive("dl_22post_binary", cls_dict={
+dl_23post_multi = DenseClassifierDL.derive("dl_23post_multi", cls_dict={
+    "training_configs": lambda self, requested_configs: ["c23postv14"],
+    "class_factors": class_factors["ones"],
+    "input_features": input_features["reduced"]})
+dl_23pre_multi = DenseClassifierDL.derive("dl_23pre_multi", cls_dict={
+    "training_configs": lambda self, requested_configs: ["c23prev14"],
+    "class_factors": class_factors["ones"],
+    "input_features": input_features["reduced"]})
+
+dl_22post_binary = DenseClassifierDL.derive("dl_22post_binary", cls_dict={
     "training_configs": lambda self, requested_configs: ["c22postv14"], 
     "input_features": input_features["reduced"],
     "train_nodes": {
@@ -534,6 +543,117 @@ dl_22post_binary_sm = DenseClassifierDL.derive("dl_22post_binary", cls_dict={
 })
 dl_22pre_binary = DenseClassifierDL.derive("dl_22pre_binary", cls_dict={
     "training_configs": lambda self, requested_configs: ["c22prev14"], 
+    "input_features": input_features["reduced"] + [ "mli_lb_pt", 
+                                                    "mli_lb_mass_2l", 
+                                                    "mli_lb_indv_pt_2l",],
+    "train_nodes": {
+        "sig_binary": {
+            "ml_id": 0,
+            "label": "Signal",
+            "color": "#000000",
+            "class_factor_mode": "equal",
+            "sub_processes": (
+                "hhh_4b2w2l2nu_c30_d40", "hhh_4b2w2l2nu_c30_d499", "hhh_4b2w2l2nu_c30_d4m1",
+                "hhh_4b2w2l2nu_c319_d419", "hhh_4b2w2l2nu_c31_d40", "hhh_4b2w2l2nu_c31_d42",
+                "hhh_4b2w2l2nu_c32_d4m1", "hhh_4b2w2l2nu_c34_d49", "hhh_4b2w2l2nu_c3m1_d40",
+                "hhh_4b2w2l2nu_c3m1_d4m1", "hhh_4b2w2l2nu_c3m1p5_d4m0p5",
+            ),
+        },
+        "bkg_binary": {
+            "ml_id": 1,
+            "label": "Background",
+            "color": "#e76300",  # Spanish Orange
+            "class_factor_mode": "xsec",
+            "sub_processes": (
+                "tt",
+                "st",
+                "dy",
+                "h",
+            ),
+        },
+    },
+    # relative class factors between different nodes
+    "class_factors": {
+        "sig_binary": 1,
+        "bkg_binary": 1,
+    },
+        # relative process weights within one class
+    "sub_process_class_factors": {
+        "hhh_4b2w2l2nu_c30_d40": 2,
+        "hhh_4b2w2l2nu_c30_d499": 1,
+        "hhh_4b2w2l2nu_c30_d4m1": 1,
+        "hhh_4b2w2l2nu_c319_d419": 1,
+        "hhh_4b2w2l2nu_c31_d40": 1,
+        "hhh_4b2w2l2nu_c31_d42": 1,
+        "hhh_4b2w2l2nu_c32_d4m1": 1,
+        "hhh_4b2w2l2nu_c34_d49": 1,
+        "hhh_4b2w2l2nu_c3m1_d40": 1,
+        "hhh_4b2w2l2nu_c3m1_d4m1": 1,
+        "hhh_4b2w2l2nu_c3m1p5_d4m0p5": 1,
+        "tt": 1,
+        "st": 1,
+        "dy": 1,
+        "h": 1,
+    },
+    "epochs": 100,
+})
+
+dl_23post_binary = DenseClassifierDL.derive("dl_23post_binary", cls_dict={
+    "training_configs": lambda self, requested_configs: ["c23postv14"], 
+    "input_features": input_features["reduced"],
+    "train_nodes": {
+        "sig_binary": {
+            "ml_id": 0,
+            "label": "Signal",
+            "color": "#000000",
+            "class_factor_mode": "equal",
+            "sub_processes": (
+                "hhh_4b2w2l2nu_c30_d40", "hhh_4b2w2l2nu_c30_d499", "hhh_4b2w2l2nu_c30_d4m1",
+                "hhh_4b2w2l2nu_c319_d419", "hhh_4b2w2l2nu_c31_d40", "hhh_4b2w2l2nu_c31_d42",
+                "hhh_4b2w2l2nu_c32_d4m1", "hhh_4b2w2l2nu_c34_d49", "hhh_4b2w2l2nu_c3m1_d40",
+                "hhh_4b2w2l2nu_c3m1_d4m1", "hhh_4b2w2l2nu_c3m1p5_d4m0p5",
+            ),
+        },
+        "bkg_binary": {
+            "ml_id": 1,
+            "label": "Background",
+            "color": "#e76300",  # Spanish Orange
+            "class_factor_mode": "xsec",
+            "sub_processes": (
+                "tt",
+                "st",
+                "dy",
+                "h",
+            ),
+        },
+    },
+    # relative class factors between different nodes
+    "class_factors": {
+        "sig_binary": 1,
+        "bkg_binary": 1,
+    },
+        # relative process weights within one class
+    "sub_process_class_factors": {
+        "hhh_4b2w2l2nu_c30_d40": 2,
+        "hhh_4b2w2l2nu_c30_d499": 1,
+        "hhh_4b2w2l2nu_c30_d4m1": 1,
+        "hhh_4b2w2l2nu_c319_d419": 1,
+        "hhh_4b2w2l2nu_c31_d40": 1,
+        "hhh_4b2w2l2nu_c31_d42": 1,
+        "hhh_4b2w2l2nu_c32_d4m1": 1,
+        "hhh_4b2w2l2nu_c34_d49": 1,
+        "hhh_4b2w2l2nu_c3m1_d40": 1,
+        "hhh_4b2w2l2nu_c3m1_d4m1": 1,
+        "hhh_4b2w2l2nu_c3m1p5_d4m0p5": 1,
+        "tt": 1,
+        "st": 1,
+        "dy": 1,
+        "h": 1,
+    },
+    "epochs": 100,
+})
+dl_23pre_binary = DenseClassifierDL.derive("dl_23pre_binary", cls_dict={
+    "training_configs": lambda self, requested_configs: ["c23prev14"], 
     "input_features": input_features["reduced"] + [ "mli_lb_pt", 
                                                     "mli_lb_mass_2l", 
                                                     "mli_lb_indv_pt_2l",],

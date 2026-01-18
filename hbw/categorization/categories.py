@@ -321,10 +321,11 @@ def catid_4b(self: Categorizer, events: ak.Array, **kwargs) -> tuple[ak.Array, a
 
 # TODO: not hard-coded -> use config?
 ml_processes = [
-    "hh_ggf_hbb_hvv_kl1_kt1", "hh_vbf_hbb_hvv_kv1_k2v1_kl1",
-    "hh_ggf_hbb_hvvqqlnu_kl1_kt1", "hh_vbf_hbb_hvvqqlnu_kv1_k2v1_kl1",
-    "hh_ggf_hbb_hvv2l2nu_kl1_kt1", "hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1",
-    "hh_ggf_kl1_kt1", "hh_vbf_kv1_k2v1_kl1",
+    "hhh_4b2w2l2nu_c30_d40",
+    "hhh_4b2w2l2nu_c30_d499", "hhh_4b2w2l2nu_c30_d4m1",
+    "hhh_4b2w2l2nu_c319_d419", "hhh_4b2w2l2nu_c31_d40", "hhh_4b2w2l2nu_c31_d42",
+    "hhh_4b2w2l2nu_c32_d4m1", "hhh_4b2w2l2nu_c34_d49", "hhh_4b2w2l2nu_c3m1_d40",
+    "hhh_4b2w2l2nu_c3m1_d4m1", "hhh_4b2w2l2nu_c3m1p5_d4m0p5",
     "tt", "st", "w_lnu", "dy", "v_lep", "h", "qcd",
     "dy_m10toinf",
     "dy_m50toinf", "tt_dl", "st_tchannel_t",

@@ -237,7 +237,7 @@ def hbw_dataset_names(config: od.Config, as_list: bool = False) -> DotDict[str: 
                 "h_ggf_htt_powheg",
                 "h_vbf_htt_powheg",
                 "zh_htt_powheg",
-                "wph_htt_powheg",
+                # "wph_htt_powheg", # No selection in PreEE
                 "wmh_htt_powheg",
                 # thq, thw
                 "thq_4f_madgraph",

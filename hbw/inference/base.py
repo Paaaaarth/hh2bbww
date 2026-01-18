@@ -58,7 +58,7 @@ class HBWInferenceModelBase(InferenceModel):
     # 14: increase min eff. MC entries from 3 to 12 (rerunning cards just for clearer versioning)
     version: int = 15
 
-    bjet_cats: set = {"2b", "3b", "34", "boosted"}
+    bjet_cats: set = {"2b", "3b", "4b", "34", "boosted"}
     campaign_tags: set = {"2022postEE", "2022preEE", "2023postBPix", "2023preBPix"}
     multi_variables: bool = False
 

@@ -28,21 +28,21 @@ if use_old_version:
 # All categories to be included in the final datacard
 config_categories = DotDict({
     "default": [
-        "sr_2b_exact_ml_sig_all",
-        "sr_2b_exact_ml_dy",
-        "sr_2b_exact_ml_tt",
-        "sr_2b_exact_ml_st",
-        "sr_2b_exact_ml_h",
-        "sr_3b_exact_ml_sig_all",
-        "sr_3b_exact_ml_dy",
-        "sr_3b_exact_ml_tt",
-        "sr_3b_exact_ml_st",
-        "sr_3b_exact_ml_h",
-        "sr_4b_ml_sig_all",
-        "sr_4b_ml_dy",
-        "sr_4b_ml_tt",
-        "sr_4b_ml_st",
-        "sr_4b_ml_h",
+        "sr__2b__ml_sig_all",
+        "sr__2b__ml_dy",
+        "sr__2b__ml_tt",
+        "sr__2b__ml_st",
+        "sr__2b__ml_h",
+        "sr__3b__ml_sig_all",
+        "sr__3b__ml_dy",
+        "sr__3b__ml_tt",
+        "sr__3b__ml_st",
+        "sr__3b__ml_h",
+        "sr__4b__ml_sig_all",
+        "sr__4b__ml_dy",
+        "sr__4b__ml_tt",
+        "sr__4b__ml_st",
+        "sr__4b__ml_h",
     ],
 })
 # config_categories.default_boosted = (
@@ -98,6 +98,7 @@ systematics = DotDict({
     "rate_unconstrained": [
         "rate_ttbar",
         "rate_dy",
+        "rate_st",
     ],
     "rate_unconstrained1": [
         "rate_ttbar",
@@ -147,12 +148,12 @@ systematics = DotDict({
         "pdf_shape_st",
         "pdf_shape_dy",
         # "pdf_shape_w",
-        "pdf_shape_ttV",  # TODO: ttW has no murf/pdf weights
-        "pdf_shape_VV",
-        "pdf_shape_H",
-        "pdf_shape_hh_ggf_hbb_hww",
-        "pdf_shape_hh_ggf_hbb_hzz",
-        "pdf_shape_hh_ggf_hbb_htt",
+        # "pdf_shape_ttV",  # TODO: ttW has no murf/pdf weights
+        # "pdf_shape_VV",
+        # "pdf_shape_H",
+        # "pdf_shape_hh_ggf_hbb_hww",
+        # "pdf_shape_hh_ggf_hbb_hzz",
+        # "pdf_shape_hh_ggf_hbb_htt",
         # "pdf_shape_hh_vbf_hbb_hww",
         # "pdf_shape_hh_vbf_hbb_hzz",
         # "pdf_shape_hh_vbf_hbb_htt",
@@ -250,7 +251,7 @@ systematics["rate_default"] = [
     *systematics.pdf,
     *systematics.BR,
     *systematics.hbb_efficiency,
-    *systematics.rate_unconstrained3,
+    *systematics.rate_unconstrained,
 ]
 systematics["rate"] = [
     *systematics.lumi,
@@ -389,7 +390,7 @@ backgrounds = [
     "ttz",
     "dy_hf",
     "dy_lf",
-    "w_lnu",
+    # "w_lnu", # Zero rate in most categories
     "vv",
     "vvv",
     "h_ggf", "h_vbf", "zh", "wh", "zh_gg", "tth",
@@ -471,6 +472,7 @@ default_cls_dict = {
     "processes": processes_dict["hhh"],
     "config_categories": config_categories.default,
     "systematics": systematics.rate,
+    # "systematics": systematics.shape,
     "config_variable": config_variable_binary_ggf_and_vbf,
     "mc_stats": True,
     "skip_data": True,
@@ -479,7 +481,7 @@ default_cls_dict = {
 dl = HBWInferenceModelBase.derive("dl", cls_dict=default_cls_dict)
 
 #
-# currently "final" inference models
+# Inference models
 #
 dl_22post_multi_binary = dl.derive("dl_22post_multi_binary", cls_dict={
     "ml_model_name": ["dl_22post_multi", "dl_22post_binary"],
@@ -488,6 +490,17 @@ dl_22post_multi_binary = dl.derive("dl_22post_multi_binary", cls_dict={
 })
 dl_22pre_multi_binary = dl.derive("dl_22pre_multi_binary", cls_dict={
     "ml_model_name": ["dl_22pre_multi", "dl_22pre_binary"],
+    "config_variable": lambda self, config_cat_inst: "logit_mlscore.sig_binary",
+    "systematics": systematics.default,
+})
+
+dl_23post_multi_binary = dl.derive("dl_23post_multi_binary", cls_dict={
+    "ml_model_name": ["dl_23post_multi", "dl_23post_binary"],
+    "config_variable": lambda self, config_cat_inst: "logit_mlscore.sig_binary",
+    "systematics": systematics.default,
+})
+dl_23pre_multi_binary = dl.derive("dl_23pre_multi_binary", cls_dict={
+    "ml_model_name": ["dl_23pre_multi", "dl_23pre_binary"],
     "config_variable": lambda self, config_cat_inst: "logit_mlscore.sig_binary",
     "systematics": systematics.default,
 })

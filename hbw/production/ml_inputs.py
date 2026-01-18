@@ -5,7 +5,6 @@ Column production methods related to higher-level features.
 """
 
 from __future__ import annotations
-from math import e
 
 import law
 import functools
@@ -157,11 +156,11 @@ def common_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     kwargs["_clear_cache"] = _clear_cache
 
     # object padding
-    events = set_ak_column(events, "Lightjet", ak.pad_none(events.Lightjet, 2))
+    events = set_ak_column(events, "Lightjet", ak.pad_none(events.Lightjet, 4))
     events = set_ak_column(events, "Bjet", ak.pad_none(events.Bjet, 4))
-    events = set_ak_column(events, "ForwardJet", ak.pad_none(events.ForwardJet, 2))
-    events = set_ak_column(events, "InclJet", ak.pad_none(events.InclJet, 2))
-    events = set_ak_column(events, "VBFCandidateJet", ak.pad_none(events.VBFCandidateJet, 2))
+    events = set_ak_column(events, "ForwardJet", ak.pad_none(events.ForwardJet, 4))
+    events = set_ak_column(events, "InclJet", ak.pad_none(events.InclJet, 4))
+    events = set_ak_column(events, "VBFCandidateJet", ak.pad_none(events.VBFCandidateJet, 4))
     events = set_ak_column(events, "FatBjet", ak.pad_none(events.FatBjet, 2))
 
     # setup correct btagging columns
@@ -183,8 +182,6 @@ def common_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     for var in ["pt", "eta", "b_score"]:
         events = set_ak_column_f32(events, f"mli_b1_{var}", events.Bjet[:, 0][var])
         events = set_ak_column_f32(events, f"mli_b2_{var}", events.Bjet[:, 1][var])
-        events = set_ak_column_f32(events, f"mli_b3_{var}", events.Bjet[:, 2][var])
-        events = set_ak_column_f32(events, f"mli_b4_{var}", events.Bjet[:, 3][var])
         # even in DL, ~10% of events contain 4 jets, so it might be worth keeping this
         events = set_ak_column_f32(events, f"mli_j1_{var}", events.Lightjet[:, 0][var])
         events = set_ak_column_f32(events, f"mli_j2_{var}", events.Lightjet[:, 1][var])
@@ -230,7 +227,7 @@ def common_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     events = set_ak_column_f32(events, "mli_maxdr_jj_alljets", ak.max(dr, axis=1))
 
     # hbb features
-    hbb = (events.Bjet[:, 0] + events.Bjet[:, 1] + events.Bjet[:, 2] + events.Bjet[:, 3]) * 1  # NOTE: *1 so it is a Lorentzvector not a candidate vector
+    hbb = (events.Bjet[:, 0] + events.Bjet[:, 1]) * 1  # NOTE: *1 so it is a Lorentzvector not a candidate vector
     events = set_ak_column_f32(events, "mli_bb_pt", hbb.pt)
     events = set_ak_column_f32(events, "mli_mbb", hbb.mass)
 
@@ -282,7 +279,7 @@ def common_ml_inputs_init(self: Producer) -> None:
         for var in ["pt", "eta", "phi", "mass", "deta", "tag"]
     ) | set(
         f"mli_{obj}_{var}"
-        for obj in ["b1", "b2", "b3", "b4", "j1", "j2"]
+        for obj in ["b1", "b2", "j1", "j2"]
         for var in ["b_score", "pt", "eta"]
     ) | set(
         f"mli_{obj}_{var}"
@@ -344,8 +341,8 @@ def sl_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     events = set_ak_column_f32(events, "mli_mjjlnu", hww.mass)
     events = set_ak_column_f32(events, "mli_mjjl", hww_vis.mass)
 
-    # hhh system
-    hbb = (events.Bjet[:, 0] + events.Bjet[:, 1] + events.Bjet[:, 2] + events.Bjet[:, 3]) * 1 
+    # hh system angles
+    hbb = (events.Bjet[:, 0] + events.Bjet[:, 1] + events.Bjet[:, 2] + events.Bjet[:, 3]) * 1
 
     events = set_ak_column_f32(events, "mli_dphi_bb_jjlnu", abs(hbb.delta_phi(hww)))
     events = set_ak_column_f32(events, "mli_dr_bb_jjlnu", hbb.delta_r(hww))
@@ -370,93 +367,6 @@ def sl_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
         hh_vis.pt * np.cos(hh_vis.delta_phi(events[met_name])) + hh_vis.mass ** 2)
     ) ** 0.5
     events = set_ak_column_f32(events, "mli_s_min", s_min)
-
-    # test variables for bjet(Higgs identification)
-    bb_sum = ((events.Bjet[:, 0] + events.Bjet[:, 1])) * 1
-    bb_sum_2 = ((events.Bjet[:, 2] + events.Bjet[:, 3])) * 1
-
-    # Trying higgs reconstruction based on delta R
-    bb_pairs = ak.combinations(events.Bjet, 2)
-    bb_dr = bb_pairs[:, "0"].delta_r(bb_pairs[:, "1"]) 
-
-    # pair of least delta R
-    dr_min_idx = ak.argmin(bb_dr, axis=1, keepdims=True)  
-    dr_min_pair = ak.flatten(bb_pairs[dr_min_idx], axis=1)
-    bb_dr_sum = dr_min_pair["0"] + dr_min_pair["1"]
-
-    # finding the remaining two objets (needs to be improved and generalized)    
-    idx_remaining = 5 - dr_min_idx
-    other_pair = ak.flatten(bb_pairs[idx_remaining], axis=1)
-    bb_remaining = other_pair["0"] + other_pair["1"]
-
-    # delta R between two higgs candidates(Sort of...)
-    hh_dr = bb_dr_sum.delta_r(bb_remaining)
-
-    # pair with second least delta R
-    sorted_indices = ak.argsort(bb_dr, axis=1)
-    second_least_idx = sorted_indices[:, 1:2]
-    second_least_dr_pair = ak.flatten(bb_pairs[second_least_idx], axis=1)
-    bb_dr_sum_2 = second_least_dr_pair[:, "0"] + second_least_dr_pair[:, "1"]
-
-    # pair with maximum value of delta R
-    dr_max_idx = ak.argmax(bb_dr, axis=1, keepdims=True)
-    dr_max_pair = ak.flatten(bb_pairs[dr_max_idx], axis=1)
-    bb_dr_max_sum = dr_max_pair["0"] + dr_max_pair["1"]
-
-    # pair of least delta R with all jets
-    bb_pairs_all = ak.combinations(events.Jet, 2)
-    bb_dr_all = bb_pairs_all[:, "0"].delta_r(bb_pairs_all[:, "1"]) 
-    dr_min_idx_all = ak.argmin(bb_dr_all, axis=1, keepdims=True)
-    dr_min_pair_all = ak.flatten(bb_pairs_all[dr_min_idx_all], axis=1)
-    bb_dr_all_sum = dr_min_pair_all["0"] + dr_min_pair_all["1"]
-
-    events = set_ak_column_f32(events, "mli_mbb_sum", bb_sum.mass)
-    events = set_ak_column_f32(events, "mli_mbb_sum_2", bb_sum_2.mass)
-    events = set_ak_column_f32(events, "mli_mbb_dr_sum", bb_dr_sum.mass)
-    events = set_ak_column_f32(events, "mli_mbb_dr_sum_2", bb_dr_sum_2.mass)
-    events = set_ak_column_f32(events, "mli_mbb_remaining", bb_remaining.mass)
-    events = set_ak_column_f32(events, "mli_mbb_dr_max_sum", bb_dr_max_sum.mass)
-    events = set_ak_column_f32(events, "mli_mbb_dr_all_sum", bb_dr_all_sum.mass)
-    events = set_ak_column_f32(events, "mli_hh_dr", hh_dr)
-    # events = set_ak_column_f32(events, "mli_dr_h_ll", bb_dr_sum.delta_r(hll))
-
-    # # Inspired by the paper (https://www.desy.de/f/students/2018/reports/LivVage.pdf)
-    # mbb_pair_sum = (bb_pairs[:, "0"] + bb_pairs[:, "1"]).mass
-    # i = 0
-    # if abs(mbb_pair_sum - 125) < 30:
-    #     i += 1 
-    # events = set_ak_column_f32(events, "mli_nHiggs30", i)
-    
-    # FSP Test variable
-
-    lb = events.Lepton[:, 0] * 1 + events.Bjet[:, 0] * 1
-    lb_pt = events.Lepton[:, 0].pt + events.Bjet[:, 0].pt
-    lb_mass = events.Lepton[:, 0].mass + events.Bjet[:, 0].mass
-
-    events = set_ak_column_f32(events, "mli_lb_indv_pt", lb_pt)
-    events = set_ak_column_f32(events, "mli_lb_pt", lb.pt)
-    events = set_ak_column_f32(events, "mli_lb_mass", lb.mass)
-    events = set_ak_column_f32(events, "mli_lb_indv_mass", lb_mass)
-    events = set_ak_column_f32(events, "mli_lb_pt_2l", (events.Lepton[:, 0] * 2 + events.Bjet[:, 0] * 1).pt)
-    events = set_ak_column_f32(events, "mli_lb_mass_2l", (events.Lepton[:, 0] * 2 + events.Bjet[:, 0] * 1).mass)
-    events = set_ak_column_f32(events, "mli_lb_indv_mass_2l", (events.Lepton[:, 0] * 2).mass + (events.Bjet[:, 0] * 1).mass)
-    events = set_ak_column_f32(events, "mli_lb_indv_pt_2l", (events.Lepton[:, 0] * 2).pt + (events.Bjet[:, 0] * 1).pt)
-
-    # General Test variables
-
-    # lb_pairs = [[events.Lepton[:, 0], other_pair["0"]], [events.Lepton[:, 0], other_pair["1"]],
-    #             [events.Lepton[:, 1], other_pair["0"]], [events.Lepton[:, 1], other_pair["1"]]]
-    # lb_0 = events.Lepton[:, 0].delta_r(other_pair["0"])
-    # lb_1 = events.Lepton[:, 0].delta_r(other_pair["1"])
-    # lb_2 = events.Lepton[:, 1].delta_r(other_pair["0"])
-    # lb_3 = events.Lepton[:, 1].delta_r(other_pair["1"])
-    # from hbw.util import debugger; debugger()
-    events = set_ak_column_f32(events, "mli_lb_top", ((events.Lepton[:, 0] * 1)+ (other_pair["0"] * 1)).mass)
-    events = set_ak_column_f32(events, "mli_lb_top_indv", ((events.Lepton[:, 0] * 1).mass)+ ((other_pair["0"] * 1).mass))
-    events = set_ak_column_f32(events, "mli_lb_top_indv_2l", ((events.Lepton[:, 0] * 2).mass)+ ((other_pair["0"] * 1).mass))
-    events = set_ak_column_f32(events, "mli_lb_top_2l", ((events.Lepton[:, 0] * 2)+ (other_pair["0"] * 1)).mass)
-    events = set_ak_column_f32(events, "mli_lb_top_indv_2b", ((events.Lepton[:, 0] * 1).mass)+ ((other_pair["0"] * 2).mass))
-    events = set_ak_column_f32(events, "mli_lb_top_2b", ((events.Lepton[:, 0] * 1)+ (other_pair["0"] * 2)).mass)   
 
     # TODO: variable to reconstruct top quark resonances (e.g. mT(lepton + met + b))
 
@@ -531,7 +441,7 @@ def dl_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     events = set_ak_column_f32(events, "mli_deta_ll", abs(events.Lepton[:, 0].eta - (events.Lepton[:, 1]).eta))
 
     # minimum deltaR between lep and jet
-    hbb = (events.Bjet[:, 0] + events.Bjet[:, 1]) * 1  # NOTE: *1 so it is a Lorentzvector not a candidate vector
+    hbb = (events.Bjet[:, 0] + events.Bjet[:, 1] + events.Bjet[:, 2] + events.Bjet[:, 3]) * 1  # NOTE: *1 so it is a Lorentzvector not a candidate vector
 
     llbb_pairs = ak.cartesian([events.Lepton, events.Bjet], axis=1)
     lep, jet = ak.unzip(llbb_pairs)
@@ -545,6 +455,93 @@ def dl_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     events = set_ak_column_f32(events, "mli_dr_bb_llMET", hbb.delta_r(hll + events[met_name][:]))
     events = set_ak_column_f32(events, "mli_dphi_bb_nu", abs(hbb.delta_phi(events[met_name])))
     events = set_ak_column_f32(events, "mli_dphi_bb_llMET", hbb.delta_phi(hll + events[met_name][:]))
+    
+    # test variables for bjet(Higgs identification)
+    bb_sum = ((events.Bjet[:, 0] + events.Bjet[:, 1])) * 1
+    bb_sum_2 = ((events.Bjet[:, 2] + events.Bjet[:, 3])) * 1
+   
+    # Trying higgs reconstruction based on delta R
+    bb_pairs = ak.combinations(events.Bjet, 2)
+    bb_dr = bb_pairs[:, "0"].delta_r(bb_pairs[:, "1"]) 
+
+    # pair of least delta R
+    dr_min_idx = ak.argmin(bb_dr, axis=1, keepdims=True)  
+    dr_min_pair = ak.flatten(bb_pairs[dr_min_idx], axis=1)
+    bb_dr_sum = dr_min_pair["0"] + dr_min_pair["1"]
+
+    # finding the remaining two objets (needs to be improved and generalized)    
+    idx_remaining = 5 - dr_min_idx
+    other_pair = ak.flatten(bb_pairs[idx_remaining], axis=1)
+    bb_remaining = other_pair["0"] + other_pair["1"]
+
+    # delta R between two higgs candidates(h->bb)(Sort of...)
+    hh_dr = bb_dr_sum.delta_r(bb_remaining)
+
+    # pair with second least delta R
+    sorted_indices = ak.argsort(bb_dr, axis=1)
+    second_least_idx = sorted_indices[:, 1:2]
+    second_least_dr_pair = ak.flatten(bb_pairs[second_least_idx], axis=1)
+    bb_dr_sum_2 = second_least_dr_pair[:, "0"] + second_least_dr_pair[:, "1"]
+
+    # pair with maximum value of delta R
+    dr_max_idx = ak.argmax(bb_dr, axis=1, keepdims=True)
+    dr_max_pair = ak.flatten(bb_pairs[dr_max_idx], axis=1)
+    bb_dr_max_sum = dr_max_pair["0"] + dr_max_pair["1"]
+
+    # pair of least delta R with all jets
+    bb_pairs_all = ak.combinations(events.Jet, 2)
+    bb_dr_all = bb_pairs_all[:, "0"].delta_r(bb_pairs_all[:, "1"]) 
+    dr_min_idx_all = ak.argmin(bb_dr_all, axis=1, keepdims=True)
+    dr_min_pair_all = ak.flatten(bb_pairs_all[dr_min_idx_all], axis=1)
+    bb_dr_all_sum = dr_min_pair_all["0"] + dr_min_pair_all["1"]
+
+    events = set_ak_column_f32(events, "mli_mbb_sum", bb_sum.mass)
+    events = set_ak_column_f32(events, "mli_mbb_sum_2", bb_sum_2.mass)
+    events = set_ak_column_f32(events, "mli_mbb_dr_sum", bb_dr_sum.mass)
+    events = set_ak_column_f32(events, "mli_mbb_dr_sum_2", bb_dr_sum_2.mass)
+    events = set_ak_column_f32(events, "mli_mbb_remaining", bb_remaining.mass)
+    events = set_ak_column_f32(events, "mli_mbb_dr_max_sum", bb_dr_max_sum.mass)
+    events = set_ak_column_f32(events, "mli_mbb_dr_all_sum", bb_dr_all_sum.mass)
+    events = set_ak_column_f32(events, "mli_hh_dr", hh_dr)
+    events = set_ak_column_f32(events, "mli_dr_h_ll", bb_dr_sum.delta_r(hll))
+
+    # # Inspired by the paper (https://www.desy.de/f/students/2018/reports/LivVage.pdf)
+    # mbb_pair_sum = (bb_pairs[:, "0"] + bb_pairs[:, "1"]).mass
+    # i = 0
+    # if abs(mbb_pair_sum - 125) < 30:
+    #     i += 1 
+    # events = set_ak_column_f32(events, "mli_nHiggs30", i)
+    
+    # FSP Test variable
+
+    lb = events.Lepton[:, 0] * 1 + events.Bjet[:, 0] * 1
+    lb_pt = events.Lepton[:, 0].pt + events.Bjet[:, 0].pt
+    lb_mass = events.Lepton[:, 0].mass + events.Bjet[:, 0].mass
+
+    events = set_ak_column_f32(events, "mli_lb_indv_pt", lb_pt)
+    events = set_ak_column_f32(events, "mli_lb_pt", lb.pt)
+    events = set_ak_column_f32(events, "mli_lb_mass", lb.mass)
+    events = set_ak_column_f32(events, "mli_lb_indv_mass", lb_mass)
+    events = set_ak_column_f32(events, "mli_lb_pt_2l", (events.Lepton[:, 0] * 2 + events.Bjet[:, 0] * 1).pt)
+    events = set_ak_column_f32(events, "mli_lb_mass_2l", (events.Lepton[:, 0] * 2 + events.Bjet[:, 0] * 1).mass)
+    events = set_ak_column_f32(events, "mli_lb_indv_mass_2l", (events.Lepton[:, 0] * 2).mass + (events.Bjet[:, 0] * 1).mass)
+    events = set_ak_column_f32(events, "mli_lb_indv_pt_2l", (events.Lepton[:, 0] * 2).pt + (events.Bjet[:, 0] * 1).pt)
+
+    # General Test variables
+
+    # lb_pairs = [[events.Lepton[:, 0], other_pair["0"]], [events.Lepton[:, 0], other_pair["1"]],
+    #             [events.Lepton[:, 1], other_pair["0"]], [events.Lepton[:, 1], other_pair["1"]]]
+    # lb_0 = events.Lepton[:, 0].delta_r(other_pair["0"])
+    # lb_1 = events.Lepton[:, 0].delta_r(other_pair["1"])
+    # lb_2 = events.Lepton[:, 1].delta_r(other_pair["0"])
+    # lb_3 = events.Lepton[:, 1].delta_r(other_pair["1"])
+    # from hbw.util import debugger; debugger()
+    events = set_ak_column_f32(events, "mli_lb_top", ((events.Lepton[:, 0] * 1)+ (other_pair["0"] * 1)).mass)
+    events = set_ak_column_f32(events, "mli_lb_top_indv", ((events.Lepton[:, 0] * 1).mass)+ ((other_pair["0"] * 1).mass))
+    events = set_ak_column_f32(events, "mli_lb_top_indv_2l", ((events.Lepton[:, 0] * 2).mass)+ ((other_pair["0"] * 1).mass))
+    events = set_ak_column_f32(events, "mli_lb_top_2l", ((events.Lepton[:, 0] * 2)+ (other_pair["0"] * 1)).mass)
+    events = set_ak_column_f32(events, "mli_lb_top_indv_2b", ((events.Lepton[:, 0] * 1).mass)+ ((other_pair["0"] * 2).mass))
+    events = set_ak_column_f32(events, "mli_lb_top_2b", ((events.Lepton[:, 0] * 1)+ (other_pair["0"] * 2)).mass)  
 
     # fill nan/none values of all produced columns
     for col in self.ml_input_columns:
