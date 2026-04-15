@@ -127,6 +127,173 @@ class DenseModelMixin(object):
 
         return model
 
+# class TransformerModelMixin(object):
+#     """
+#     Mixin that provides an implementation for `prepare_ml_model` using a Transformer architecture.
+#     Optimized for tabular HEP classification tasks.
+#     """
+
+#     # Transformer-specific hyperparameters
+#     _default__embed_dim: int = 64        # Increased: richer feature representations
+#     _default__num_heads: int = 4
+#     _default__ff_dim: int = 128          # Increased: 2x embed_dim is a good heuristic
+#     _default__num_blocks: int = 4        # Increased: deeper = more expressive
+#     _default__dropout: float = 0.10
+#     _default__learningrate: float = 0.00050
+#     _default__mlp_units: int = 128       # NEW: classification head width
+#     _default__mlp_layers: int = 2        # NEW: classification head depth
+
+#     loss: str = "categorical_crossentropy"
+#     focal_loss_alpha: float = 0.25
+#     focal_loss_gamma: float = 2.0
+
+#     def cast_ml_param_values(self):
+#         super().cast_ml_param_values()
+#         self.embed_dim = int(self.embed_dim)
+#         self.num_heads = int(self.num_heads)
+#         self.ff_dim = int(self.ff_dim)
+#         self.num_blocks = int(self.num_blocks)
+#         self.mlp_units = int(self.mlp_units)
+#         self.mlp_layers = int(self.mlp_layers)
+#         self.dropout = float(self.dropout)
+#         self.learningrate = float(self.learningrate)
+#         self.loss = str(self.loss)
+#         self.focal_loss_alpha = float(self.focal_loss_alpha)
+#         self.focal_loss_gamma = float(self.focal_loss_gamma)
+
+#     def prepare_ml_model(self, task: law.Task,):
+#         import tensorflow as tf
+#         import tensorflow.keras as keras
+#         from keras.models import Model
+#         from keras.layers import (
+#             Input, Dense, BatchNormalization, LayerNormalization,
+#             MultiHeadAttention, Dropout, GlobalAveragePooling1D,
+#             Reshape, Add, Activation
+#         )
+#         from hbw.ml.tf_util import cumulated_crossentropy
+
+#         n_inputs = len(set(self.input_features))
+#         n_outputs = len(self.train_nodes.keys())
+
+#         # ── 1. Input + Preprocessing ──────────────────────────────────────────
+#         inputs = Input(shape=(n_inputs,), name="input")
+
+#         # BatchNorm on raw inputs (mean/variance learned from data)
+#         x = BatchNormalization(name="input_norm")(inputs)
+
+#         # Reshape flat features into a "sequence" of tokens: (batch, n_inputs, 1)
+#         x = Reshape((n_inputs, 1), name="reshape")(x)
+
+#         # Linear embedding: project each scalar feature → embed_dim
+#         # (equivalent to a shared Dense across the sequence dimension)
+#         x = Dense(self.embed_dim, use_bias=False, name="feature_embedding")(x)
+
+#         # ── 2. Learnable [CLS] token  ─────────────────────────────────────────
+#         # A single trainable token is prepended. After all Transformer blocks
+#         # its representation captures a global summary of the full sequence,
+#         # which is a cleaner classification signal than average-pooling.
+#         batch_size = tf.shape(x)[0]
+#         cls_token = self.add_weight_cls_token(n_inputs)  # see helper below
+#         cls_tokens = tf.broadcast_to(cls_token, [batch_size, 1, self.embed_dim])
+#         x = tf.concat([cls_tokens, x], axis=1)          # (B, n_inputs+1, embed_dim)
+
+#         # ── 3. Transformer Blocks ─────────────────────────────────────────────
+#         for i in range(self.num_blocks):
+#             # --- Self-Attention sub-layer ---
+#             attn_output = MultiHeadAttention(
+#                 num_heads=self.num_heads,
+#                 key_dim=self.embed_dim // self.num_heads,  # per-head dimension
+#                 dropout=self.dropout,
+#                 name=f"mha_{i}",
+#             )(x, x)
+#             attn_output = Dropout(self.dropout, name=f"attn_drop_{i}")(attn_output)
+#             x = LayerNormalization(epsilon=1e-6, name=f"ln1_{i}")(Add(name=f"res1_{i}")([x, attn_output]))
+
+#             # --- Feed-Forward sub-layer (Pre-LN improves gradient flow) ---
+#             ffn = LayerNormalization(epsilon=1e-6, name=f"ln2_{i}")(x)   # Pre-LN
+#             ffn = Dense(self.ff_dim, name=f"ffn_expand_{i}")(ffn)
+#             ffn = Activation("gelu", name=f"gelu_{i}")(ffn)              # GELU > ReLU
+#             ffn = Dropout(self.dropout, name=f"ffn_drop_{i}")(ffn)
+#             ffn = Dense(self.embed_dim, name=f"ffn_contract_{i}")(ffn)
+#             ffn = Dropout(self.dropout, name=f"ffn_drop2_{i}")(ffn)
+#             x = Add(name=f"res2_{i}")([x, ffn])
+
+#         # ── 4. Readout ────────────────────────────────────────────────────────
+#         # Extract CLS token (index 0 along the sequence axis)
+#         cls_output = x[:, 0, :]   # (B, embed_dim)
+
+#         # ── 5. Classification Head (MLP) ──────────────────────────────────────
+#         # A small MLP after the Transformer head is standard practice and
+#         # significantly helps final discrimination power.
+#         head = cls_output
+#         for j in range(self.mlp_layers):
+#             units = max(self.mlp_units // (2 ** j), n_outputs * 2)
+#             head = Dense(units, name=f"head_dense_{j}")(head)
+#             head = BatchNormalization(name=f"head_bn_{j}")(head)
+#             head = Activation("gelu", name=f"head_act_{j}")(head)
+#             head = Dropout(self.dropout, name=f"head_drop_{j}")(head)
+
+#         outputs = Dense(n_outputs, activation="softmax", name="output")(head)
+
+#         # ── 6. Build Model ────────────────────────────────────────────────────
+#         model = Model(inputs=inputs, outputs=outputs)
+
+#         # ── 7. Compile ────────────────────────────────────────────────────────
+#         # Cosine-decay schedule: warm-up prevents early instability,
+#         # cosine annealing helps escape sharp minima near the end of training.
+#         lr_schedule = keras.optimizers.schedules.CosineDecayRestarts(
+#             initial_learning_rate=self.learningrate,
+#             first_decay_steps=1000,
+#             t_mul=2.0,
+#             m_mul=0.9,
+#         )
+
+#         optimizer = keras.optimizers.AdamW(    # AdamW > Adam for generalisation
+#             learning_rate=lr_schedule,
+#             weight_decay=1e-4,
+#             beta_1=0.9,
+#             beta_2=0.999,
+#             epsilon=1e-6,
+#             amsgrad=False,
+#         )
+
+#         loss_fn = (
+#             "categorical_crossentropy"
+#             if getattr(self, "negative_weights", "") == "ignore"
+#             else cumulated_crossentropy
+#         )
+
+#         if self.loss == "focal_loss":
+#             from keras.losses import CategoricalFocalCrossentropy
+#             loss_fn = CategoricalFocalCrossentropy(
+#                 alpha=self.focal_loss_alpha,
+#                 gamma=self.focal_loss_gamma,
+#             )
+
+#         model.compile(
+#             loss=loss_fn,
+#             optimizer=optimizer,
+#             metrics=["categorical_accuracy"],
+#             weighted_metrics=["categorical_accuracy"],
+#         )
+
+#         return model
+
+#     # ── Helper: CLS token weight ───────────────────────────────────────────────
+#     # Must be called on an instance that supports add_weight (e.g. a Keras layer).
+#     # If TransformerModelMixin is not itself a Layer, store the token as a
+#     # tf.Variable and reference it via closure instead.
+#     def add_weight_cls_token(self, n_inputs):
+#         import tensorflow as tf
+#         if not hasattr(self, "_cls_token"):
+#             self._cls_token = tf.Variable(
+#                 tf.zeros([1, 1, self.embed_dim]),
+#                 trainable=True,
+#                 name="cls_token",
+#                 dtype=tf.float32,
+#             )
+#         return self._cls_token
+
 
 class CallbacksBase(object):
     """ Base class that handles parametrization of callbacks """

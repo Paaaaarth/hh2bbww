@@ -16,6 +16,7 @@ import cmsdb.processes as cmsdb_procs
 from columnflow.util import DotDict
 from columnflow.tasks.external import GetDatasetLFNs
 from columnflow.config_util import get_root_processes_from_campaign
+from hbw.config.processes import create_parent_process
 
 
 logger = law.logger.get_logger(__name__)
@@ -55,43 +56,22 @@ def hbw_dataset_names(config: od.Config, as_list: bool = False) -> DotDict[str: 
         for era in data_eras
     ]
 
-    ggf_samples = lambda hhdecay: [
-        f"hh_ggf_{hhdecay}_kl0_kt1_powheg",
-        f"hh_ggf_{hhdecay}_kl1_kt1_powheg",
-        f"hh_ggf_{hhdecay}_kl2p45_kt1_powheg",
-        f"hh_ggf_{hhdecay}_kl5_kt1_powheg",
-    ]
-    vbf_samples = lambda hhdecay: [
-        f"hh_vbf_{hhdecay}_kv1_k2v1_kl1_madgraph",
-        f"hh_vbf_{hhdecay}_kv1_k2v0_kl1_madgraph",
-        f"hh_vbf_{hhdecay}_kv1p74_k2v1p37_kl14p4_madgraph",
-        f"hh_vbf_{hhdecay}_kvm0p012_k2v0p03_kl10p2_madgraph",
-        f"hh_vbf_{hhdecay}_kvm0p758_k2v1p44_klm19p3_madgraph",
-        f"hh_vbf_{hhdecay}_kvm0p962_k2v0p959_klm1p43_madgraph",
-        f"hh_vbf_{hhdecay}_kvm1p21_k2v1p94_klm0p94_madgraph",
-        f"hh_vbf_{hhdecay}_kvm1p6_k2v2p72_klm1p36_madgraph",
-        f"hh_vbf_{hhdecay}_kvm1p83_k2v3p57_klm3p39_madgraph",
-        f"hh_vbf_{hhdecay}_kv2p12_k2v3p87_klm5p96_madgraph",
-        # f"hh_vbf_{hhdecay}_kvm2p12_k2v3p87_klm5p96_madgraph",
-    ] if config.x.run == 3 else [
-        f"hh_vbf_{hhdecay}_kv1_k2v1_kl1_madgraph",
-        f"hh_vbf_{hhdecay}_kv1_k2v1_kl0_madgraph",
-        f"hh_vbf_{hhdecay}_kv1_k2v1_kl2_madgraph",
-        f"hh_vbf_{hhdecay}_kv1_k2v0_kl1_madgraph",
-        f"hh_vbf_{hhdecay}_kv1_k2v2_kl1_madgraph",
-        f"hh_vbf_{hhdecay}_kv0p5_k2v1_kl1_madgraph",
-        f"hh_vbf_{hhdecay}_kv1p5_k2v1_kl1_madgraph",
-    ]
-
     dataset_names = DotDict.wrap({
         # **data_datasets,
         "data": data_datasets,
         "data_met": config.x.if_era(cfg_tag="is_for_sf", values=data_met_datasets),
         "tt": ["tt_sl_powheg", "tt_dl_powheg", "tt_fh_powheg"],
+        "ttbb": ["ttbb_dl_powheg", "ttbb_sl_powheg", "ttbb_fh_powheg",],
         "hhh": ["hhh_4b2w2l2nu_c30_d40_amcatnlo", "hhh_4b2w2l2nu_c30_d499_amcatnlo", "hhh_4b2w2l2nu_c30_d4m1_amcatnlo",
                 "hhh_4b2w2l2nu_c319_d419_amcatnlo", "hhh_4b2w2l2nu_c31_d40_amcatnlo", "hhh_4b2w2l2nu_c31_d42_amcatnlo",
                 "hhh_4b2w2l2nu_c32_d4m1_amcatnlo", "hhh_4b2w2l2nu_c34_d49_amcatnlo", "hhh_4b2w2l2nu_c3m1_d40_amcatnlo",
-                "hhh_4b2w2l2nu_c3m1_d4m1_amcatnlo", "hhh_4b2w2l2nu_c3m1p5_d4m0p5_amcatnlo"],
+                "hhh_4b2w2l2nu_c3m1_d4m1_amcatnlo", "hhh_4b2w2l2nu_c3m1p5_d4m0p5_amcatnlo",
+                # tau variations
+                "hhh_4b2tau_c30_d40_amcatnlo", "hhh_4b2tau_c30_d499_amcatnlo", "hhh_4b2tau_c30_d4m1_amcatnlo",
+                "hhh_4b2tau_c319_d419_amcatnlo", "hhh_4b2tau_c31_d40_amcatnlo", "hhh_4b2tau_c31_d42_amcatnlo",
+                "hhh_4b2tau_c32_d4m1_amcatnlo", "hhh_4b2tau_c34_d49_amcatnlo", "hhh_4b2tau_c3m1_d40_amcatnlo",
+                "hhh_4b2tau_c3m1_d4m1_amcatnlo", "hhh_4b2tau_c3m1p5_d4m0p5_amcatnlo",
+                ],
         "st": [
             "st_schannel_t_lep_4f_amcatnlo",
             "st_schannel_tbar_lep_4f_amcatnlo",
@@ -160,7 +140,8 @@ def hbw_dataset_names(config: od.Config, as_list: bool = False) -> DotDict[str: 
         "vv": [
             *config.x.if_era(run=3, values=[
                 "ww_2l2nu_powheg",
-                "ww_lnu2q_powheg",
+                "ww_lnu"
+                "2q_powheg", # temporarily removed due to using limited config
                 "wz_3lnu_powheg",
                 "wz_2l2q_powheg",
                 "wz_lnu2q_powheg",
@@ -210,7 +191,7 @@ def hbw_dataset_names(config: od.Config, as_list: bool = False) -> DotDict[str: 
                 # "h_vbf_hbb_powheg",
                 "h_vbf_hww2l2nu_powheg",
                 # "h_ggf_hzg_zll_powheg",  # probably empty in DL SR
-                "zh_zqq_hbb_powheg",
+                "zh_zqq_hbb_powheg", # temporarily removed due to using limited config
                 "zh_zll_hbb_powheg",
                 # "zh_zll_hcc_powheg",  # 0.18 events in DL postEE analysis region
                 "zh_hww2l2nu_powheg",
@@ -244,17 +225,19 @@ def hbw_dataset_names(config: od.Config, as_list: bool = False) -> DotDict[str: 
                 "thw_madgraph",
             ]),
         ],
-        "hh_ggf": [
-            *ggf_samples("hbb_hvvqqlnu"),
-            *ggf_samples("hbb_hvv2l2nu"),
-            *ggf_samples("hbb_htt"),
-            *config.x.if_era(run=3, values=ggf_samples("hbb_hvv")),
+        "hh": [
+            *config.x.if_era(run=3, values=[
+                # "hh_ggf_hbb_hvv_kl1_kt1_powheg",
+                "hh_ggf_hbb_hvv2l2nu_kl1_kt1_powheg", 
+                # "tthh_4b_madgraph",
+                # "hh_ggf_hbb_hvv2l2nu_kl1_kt1",
+                # "hh_ggf_hbb_htt_kl1_kt1_madgraph",
+            ]),
         ],
-        "hh_vbf": [
-            *vbf_samples("hbb_hvvqqlnu"),
-            *vbf_samples("hbb_hvv2l2nu"),
-            *vbf_samples("hbb_htt"),
-            *config.x.if_era(run=3, values=vbf_samples("hbb_hvv")),
+        "tthh_4b": [
+            *config.x.if_era(run=3, values=[
+                "tthh_4b_madgraph",
+            ]),
         ],
         "graviton_hh_ggf_bbww": [
             *config.x.if_era(run=2, cfg_tag="is_resonant", values=[
@@ -344,10 +327,10 @@ def get_dataset_names_for_config(config: od.Config, as_list: bool = False):
         dataset_names.pop("qcd_em", None)
         dataset_names.pop("qcd_bctoe", None)
 
-    if not config.has_tag("is_nonresonant"):
-        # remove all nonresonant signal processes/datasets
-        for hh_proc in ("hh_ggf", "hh_vbf"):
-            dataset_names.pop(hh_proc)
+    # if not config.has_tag("is_nonresonant"):
+    #     # remove all nonresonant signal processes/datasets
+    #     for hh_proc in ("hh_ggf", "hh_vbf"):
+    #         dataset_names.pop(hh_proc)
 
     return dataset_names
 

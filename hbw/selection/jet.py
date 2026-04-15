@@ -127,10 +127,11 @@ def jet_selection(
     if self.config_inst.x("n_btag", 0) > 4:
         steps[f"nBjet{self.config_inst.x.n_btag}"] = events.cutflow.n_btag >= self.config_inst.x.n_btag
 
-    # define b-jets as the two b-score leading jets, b-score sorted
+    # define b-jets as the four b-score leading jets, b-score sorted
     bjet_indices = masked_sorted_indices(jet_mask, b_score)[:, :4]
 
     # define lightjets as all non b-jets, pt-sorted
+    # I think I would need to change the "2" below to "4" to match the bjet definition above
     b_idx = ak.fill_none(ak.pad_none(bjet_indices, 2), -1)
     lightjet_indices = jet_indices[(jet_indices != b_idx[:, 0]) & (jet_indices != b_idx[:, 1])]
 

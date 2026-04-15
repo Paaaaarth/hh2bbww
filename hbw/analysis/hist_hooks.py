@@ -45,28 +45,31 @@ def rebin(task, hists: hist.Histogram, **kwargs):
     """
     # get variable inst assuming we created a 1D histogram
     variable_inst = task.config_inst.get_variable(task.branch_data.variable)
+    category_inst = task.config_inst.get_category(task.branch_data.category)
+    edges_path = "/data/dust/user/patilpar/test_repo/hh2bbww/data/cf_store/hbw_dl/hbw.ModifyDatacardsFlatRebin/c22prev14__c22postv14__c23prev14__c23postv14/calib__ak4V5__ak8V5__eleV6/sel__dl1V0/red__default/prod__event_weightsV5__dl_ml_inputsV3__cats_ml_dl_combo_multiV5/hist__with_trigger_weightV2/inf__dl_combo_multi_binaryV15/ml__dl_combo_multi__405bcdc426__dl_combo_binary__b400366eea/iter2"  # noqa: E501
 
-    # edges for 2b channel
-    edges = {
-        "mlscore.hh_ggf_hbb_hvv2l2nu_kl1_kt1": [0.0, 0.429, 0.509, 0.5720000000000001, 0.629, 0.68, 0.72, 0.757, 0.789, 0.8200000000000001, 1.0],  # noqa
-        "mlscore.hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1": [0.0, 0.427, 0.529, 0.637, 0.802, 1.0],
-        "mlscore.tt": [0.0, 0.533, 0.669, 1.0],
-        "mlscore.h": [0.0, 0.494, 0.651, 1.0],
-    }
+    edges_filename = {
+        "sr__2b__ml_sig_all": "edges_10__cfg_2022_2023__cat_sr__2b__ml_sig_all.json",
+        "sr__3b__ml_sig_all": "edges_10__cfg_2022_2023__cat_sr__3b__ml_sig_all.json",   
+        "sr__4b__ml_sig_all": "edges_10__cfg_2022_2023__cat_sr__4b__ml_sig_all.json",
+    }[category_inst.name]
+    import json
+    with open(f"{edges_path}/{edges_filename}", "r") as f:
+        edges = json.load(f)
 
     h_rebinned = DotDict()
+    for config_inst, proc_hists in hists.items():
+        h_rebinned[config_inst] = DotDict()
+        for proc_inst, proc_hist in proc_hists.items():
+            old_axis = proc_hist.axes[variable_inst.name]
 
-    edges = edges[variable_inst.name]
-    for proc, h in hists.items():
-        old_axis = h.axes[variable_inst.name]
+            h_rebin = apply_rebinning_edges(proc_hist.copy(), old_axis.name, edges)
 
-        h_rebin = apply_rebinning_edges(h.copy(), old_axis.name, edges)
-
-        if not np.isclose(h.sum().value, h_rebin.sum().value):
-            raise Exception(f"Rebinning changed histogram value: {h.sum().value} -> {h_rebin.sum().value}")
-        if not np.isclose(h.sum().variance, h_rebin.sum().variance):
-            raise Exception(f"Rebinning changed histogram variance: {h.sum().variance} -> {h_rebin.sum().variance}")
-        h_rebinned[proc] = h_rebin
+            if not np.isclose(proc_hist.sum().value, h_rebin.sum().value):
+                raise Exception(f"Rebinning changed histogram value: {proc_hist.sum().value} -> {h_rebin.sum().value}")
+            if not np.isclose(proc_hist.sum().variance, h_rebin.sum().variance):
+                raise Exception(f"Rebinning changed histogram variance: {proc_hist.sum().variance} -> {h_rebin.sum().variance}")  # noqa: E501
+            h_rebinned[config_inst][proc_inst] = h_rebin
 
     return h_rebinned
 

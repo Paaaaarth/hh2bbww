@@ -16,7 +16,8 @@ from cmsdb.util import add_decay_process
 
 def modify_cmsdb_processes():
     from cmsdb.processes import (
-        data, data_met,
+        data, 
+        data_met,
         qcd_mu, qcd_em, qcd_bctoe,
         tt, ttv, st, w_lnu, vv, h,
         dy, dy_m4to10, dy_m10to50, dy_m50toinf, dy_m50toinf_0j, dy_m50toinf_1j, dy_m50toinf_2j,
@@ -25,6 +26,8 @@ def modify_cmsdb_processes():
         tth, thq, thw,
         st_twchannel_t_dl, st_twchannel_tbar_dl,
         tt_dl,
+        tt_dl_nonb, tt_sl_nonb, tt_fh_nonb,
+        ttbb, ttbb_dl_1b, ttbb_sl_1b, ttbb_fh_1b,
         hh_ggf_hbb_hzz_kl1_kt1, hh_vbf_hbb_hzz_kv1_k2v1_kl1,
         hh_ggf_hbb_htt_kl1_kt1, hh_vbf_hbb_htt_kv1_k2v1_kl1,
     )
@@ -61,6 +64,22 @@ def modify_cmsdb_processes():
                 xsecs=None,
                 aux={"flavour": flavour},
             )
+
+    tt_custom = create_parent_process(
+        [tt_dl_nonb, tt_sl_nonb, tt_fh_nonb],
+        name="tt_custom",
+        id=21199,
+        label="TT Custom",
+    )
+    tt_custom.add_parent_process(tt)
+
+    ttbb_custom = create_parent_process(
+        [ttbb_dl_1b, ttbb_sl_1b, ttbb_fh_1b],
+        name="ttbb_custom",
+        id=68899,
+        label="TTBB Custom",
+    )
+    ttbb_custom.add_parent_process(ttbb)
 
     qcd_mu.label = "QCD Muon enriched"
     qcd_ele = create_parent_process(

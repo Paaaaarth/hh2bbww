@@ -285,7 +285,7 @@ default_correction_weights = {
 
 default_weight_columns = {
     "stitched_normalization_weight": [],
-    "dy_correction_weight": [],
+    # "dy_correction_weight": [],
     "trigger_weight": ["trigger_sf"],
     **default_correction_weights,
 }
@@ -313,7 +313,6 @@ with_vjets_weight = default_hist_producer.derive("with_vjets_weight", cls_dict={
 }})
 
 with_trigger_weight = default_hist_producer.derive("with_trigger_weight", cls_dict={
-    "pre_label": "Before DY correction",
     "weight_columns": {
         **default_correction_weights,
         # "vjets_weight": [],  # TODO: corrections/shift missing

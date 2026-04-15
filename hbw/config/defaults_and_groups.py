@@ -124,13 +124,14 @@ def set_config_defaults_and_groups(config_inst):
     # }
     config_inst.x.default_hist_producer = "with_trigger_weight"
     # config_inst.x.default_hist_producer = "with_dy_corr"
-    config_inst.x.default_hist_producer = "met_geq40_incl_dy_corr"
+    # config_inst.x.default_hist_producer = "met_geq40_incl_dy_corr"
     config_inst.x.default_ml_model = default_ml_model
-    config_inst.x.default_inference_model = "default_unblind"
+    config_inst.x.default_inference_model = "dl_22post_multi_binary"
     # config_inst.x.default_categories = ["incl", "sr", "dycr", "ttcr"]
-    config_inst.x.default_categories = ["incl", "sr", "2b", "3b", "4b"]
+    config_inst.x.default_categories = ["incl", "sr", "sr__2b", "sr__3b", "sr__4b"]
     config_inst.x.default_variables = ["jet0_pt", "mll", "n_jet", "ptll", "lepton0_pt", "lepton1_pt"]
     config_inst.x.default_processes = ["hhh_sm", "hhh_fake", "hhh_bkg"]
+    config_inst.x.default_cms_label = "simpw"
 
     # general_settings default needs to be tuple (or dict) to be resolved correctly
     # config_inst.x.default_general_settings = ("data_mc_plots_blind_conservative",)
@@ -149,8 +150,11 @@ def set_config_defaults_and_groups(config_inst):
     #     "hh_ggf_hbb_hzz_kl1_kt1", "hh_vbf_hbb_hzz_kv1_k2v1_kl1",
     #     "hh_ggf_hbb_htt_kl1_kt1", "hh_vbf_hbb_htt_kv1_k2v1_kl1",
     # ]
+    # hh_sm = [
+    #     "hh_ggf_hbb_hww_kl1_kt1", "hh_vbf_hbb_hww_kv1_k2v1_kl1", "hh_ggf_hbb_hzz_kl1_kt1", "hh_ggf_hbb_htt_kl1_kt1",
+    # ]
     hh_sm = [
-        "hh_ggf_hbb_hww_kl1_kt1", "hh_vbf_hbb_hww_kv1_k2v1_kl1", "hh_ggf_hbb_hzz_kl1_kt1", "hh_ggf_hbb_htt_kl1_kt1",
+        "hh_ggf_hbb_hvv_kl1_kt1", "hh_ggf_hbb_hvv2l2nu_kl1_kt1",
     ]
     hh_sm1 = [
         "hh_ggf_kl1_kt1", "hh_vbf_kv1_k2v1_kl1",
@@ -160,12 +164,51 @@ def set_config_defaults_and_groups(config_inst):
     # (used in wrapper_factory and during plotting)
     config_inst.x.process_groups = {
         # collection of HHH samples and backgrounds
-        "hhh_sm":["hhh_4b2w2l2nu_c30_d40",],
+        "hhh_sm":  ["hhh_4b2w2l2nu_c30_d40",
+                    "hhh_4b2tau_c30_d40",],
         "hhh_bsm": ["hhh_4b2w2l2nu_c30_d499", "hhh_4b2w2l2nu_c30_d4m1",
                     "hhh_4b2w2l2nu_c319_d419", "hhh_4b2w2l2nu_c31_d40", "hhh_4b2w2l2nu_c31_d42",
                     "hhh_4b2w2l2nu_c32_d4m1", "hhh_4b2w2l2nu_c34_d49", "hhh_4b2w2l2nu_c3m1_d40",
-                    "hhh_4b2w2l2nu_c3m1_d4m1", "hhh_4b2w2l2nu_c3m1p5_d4m0p5",],
-        "hhh_bkg": ["st", "dy", "vv", "tt", "hh_sm", "h"],
+                    "hhh_4b2w2l2nu_c3m1_d4m1", "hhh_4b2w2l2nu_c3m1p5_d4m0p5",
+                    #tau variations
+                    "hhh_4b2tau_c30_d499", "hhh_4b2tau_c30_d4m1",
+                    "hhh_4b2tau_c319_d419", "hhh_4b2tau_c31_d40", "hhh_4b2tau_c31_d42",
+                    "hhh_4b2tau_c32_d4m1", "hhh_4b2tau_c34_d49", "hhh_4b2tau_c3m1_d40",
+                    "hhh_4b2tau_c3m1_d4m1", "hhh_4b2tau_c3m1p5_d4m0p5",],
+        "hhh_bkg": ["vv", "ttw", "tttt", "hh", "dy", "h", "st", "ttbb_custom", "tt_custom", "tt"],
+        "hhh_bkg_lim": ["st", "dy", "vv_lim", "tt_sl", "tt_dl", "hh", "h_lim"],
+        "vv_lim": [
+                "ww_2l2nu_powheg",
+                "ww_lnu"
+                "wz_3lnu_powheg",
+                "wz_2l2q_powheg",
+                "wz_lnu2q_powheg",
+                "zz_2l2nu_powheg",
+                "zz_2l2q_powheg",
+            ],
+        "h_lim": [
+                "h_ggf_hww2l2nu_powheg",
+                "h_ggf_hzz2l2q_powheg",
+                "h_vbf_hww2l2nu_powheg",
+                "zh_zll_hbb_powheg",
+                "zh_hww2l2nu_powheg",
+                "zh_gg_zll_hbb_powheg",
+                "zh_gg_zqq_hbb_powheg",
+                "wph_wlnu_hbb_powheg",
+                "wmh_wlnu_hbb_powheg",
+                "tth_hbb_powheg",
+                "tth_hnonbb_powheg",  # overlap with other samples, so be careful
+                "ttzh_madgraph",
+                "ttwh_madgraph",
+                # htt
+                "h_ggf_htt_powheg",
+                "h_vbf_htt_powheg",
+                "zh_htt_powheg",
+                "wmh_htt_powheg",
+                "thq_4f_madgraph",
+                "thw_madgraph",
+            ],
+        # "hh": ["hh_ggf_hbb_hvv_kl1_kt1", "hh_ggf_hbb_htt_kl1_kt1"],
         # Collection of VBF samples with most shape and rate difference
         "gen_vbf": [
             "hh_vbf_hbb_hww2l2nu_kvm0p758_k2v1p44_klm19p3",
@@ -219,7 +262,7 @@ def set_config_defaults_and_groups(config_inst):
         "dl5": [*hbbhww_sm, "other", "h", "ttv", "vv", "w_lnu", "st", "dy_m50toinf", "tt"],  # noqa: E501
         "dl6": [*hh_sm1, "other", "h", "ttv", "vv", "w_lnu", "st", "dy_lf", "dy_hf", "tt"],  # noqa: E501
         "dl7": ["other", "h", "ttv", "vv", "w_lnu", "st", "dy_lf", "dy_hf", "tt"],  # noqa: E501
-        "dl8": [*hbbhww_variations, "other", "h", "ttv", "vv", "w_lnu", "st", "dy_lf", "dy_hf", "tt"],  # noqa: E501
+        # "dl8": [*hbbhww_variations, "other", "h", "ttv", "vv", "w_lnu", "st", "dy_lf", "dy_hf", "tt"],  # noqa: E501
         "dl9": [*hbbhww_sm, "hh_other", "other", "h", "ttv", "vv", "w_lnu", "st", "dy_lf", "dy_hf", "tt"],  # noqa: E501
         "dlmu": ["data_mu", default_signal_process, "h", "ttv", "vv", "w_lnu", "st", "dy_m4to10", "dy_m10to50", "dy_m50toinf", "tt"],  # noqa: E501
         "dleg": ["data_egamma", default_signal_process, "h", "ttv", "vv", "w_lnu", "st", "dy_m4to10", "dy_m10to50", "dy_m50toinf", "tt"],  # noqa: E501
@@ -299,7 +342,7 @@ def set_config_defaults_and_groups(config_inst):
         remove_generator = lambda x: x.replace("_powheg", "").replace("_madgraph", "").replace("_amcatnlo", "").replace("_pythia8", "").replace("4f_", "")  # noqa: E501
         config_inst.x.process_groups[f"datasets_{proc}"] = [remove_generator(dataset) for dataset in datasets]
 
-    for group in ("dl9", "dl8", "dl7", "dl6", "dl5", "dl4", "dl3", "dl2", "dl1", "dl", "2much", "2ech", "emuch"):
+    for group in ("dl9", "dl7", "dl6", "dl5", "dl4", "dl3", "dl2", "dl1", "dl", "2much", "2ech", "emuch"):
         config_inst.x.process_groups[f"d{group}"] = ["data"] + config_inst.x.process_groups[group]
 
     # dataset groups for conveniently looping over certain datasets
@@ -390,17 +433,7 @@ def set_config_defaults_and_groups(config_inst):
         # "SR_bjets_incl": bracket_expansion(["sr__ml_{signal_ggf2,sig_ggf,hh_ggf_hbb_hvv2l2nu_kl1_kt1,hh_ggf_kl1_kt1}"]),
         # "vbfSR_bjets_incl": bracket_expansion(["sr__ml_{signal_vbf2,sig_vbf,hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1,hh_vbf_kv1_k2v1_kl1}"]),  # noqa: E501
         "SR_dl": bracket_expansion(["sr__{2b,3b,4b}__ml_{sig_all}"]),  # noqa: E501
-        # "vbfSR_dl": bracket_expansion(["sr__{1b,2b}__ml_{signal_vbf2,sig_vbf,hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1,hh_vbf_kv1_k2v1_kl1}"]),  # noqa: E501
-        # "SR_dl_resolved": bracket_expansion(["sr__resolved__{1b,2b}__ml_{signal_ggf2,sig_ggf,hh_ggf_hbb_hvv2l2nu_kl1_kt1,hh_ggf_kl1_kt1}"]),  # noqa: E501
-        # "vbfSR_dl_resolved": bracket_expansion(["sr__resolved__{1b,2b}__ml_{signal_vbf2,sig_vbf,hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1,hh_vbf_kv1_k2v1_kl1}"]),  # noqa: E501
-        # "SR_1b_dl": bracket_expansion(["sr__1b__ml_{signal_ggf2,sig_ggf,hh_ggf_hbb_hvv2l2nu_kl1_kt1,hh_ggf_kl1_kt1}"]),  # noqa: E501
-        # "vbfSR_1b_dl": bracket_expansion(["sr__1b__ml_{signal_vbf2,sig_vbf,hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1,hh_vbf_kv1_k2v1_kl1}"]),  # noqa: E501
-        # "SR_2b_dl_resolved": bracket_expansion(["sr__resolved__2b__ml_{signal_ggf2,sig_ggf,hh_ggf_hbb_hvv2l2nu_kl1_kt1,hh_ggf_kl1_kt1}"]),  # noqa: E501
-        # "vbfSR_2b_dl_resolved": bracket_expansion(["sr__resolved__2b__ml_{signal_vbf2,sig_vbf,hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1,hh_vbf_kv1_k2v1_kl1}"]),  # noqa: E501
-        # "SR_dl_boosted": bracket_expansion(["sr__boosted__ml_{signal_ggf2,sig_ggf,hh_ggf_hbb_hvv2l2nu_kl1_kt1,hh_ggf_kl1_kt1}"]),  # noqa: E501
-        # "vbfSR_dl_boosted": bracket_expansion(["sr__boosted__ml_{signal_vbf2,sig_vbf,hh_vbf_hbb_hvv2l2nu_kv1_k2v1_kl1,hh_vbf_kv1_k2v1_kl1}"]),  # noqa: E501
         "BR_dl": bracket_expansion(["sr__{resolved__1b,resolved__2b,boosted,2b,3b,4b}__ml_{tt,st,dy,h}"]),
-        # "BR_bjets_incl": bracket_expansion(["sr__ml_{tt,st,dy,dy_m10toinf,h}"]),
     }
 
     # variable groups for conveniently looping over certain variables
@@ -419,7 +452,7 @@ def set_config_defaults_and_groups(config_inst):
         "sl": ["n_*", "electron_*", "muon_*", "met_*", "jet*", "bjet*", "ht"],
         "sl_resolved": ["n_*", "electron_*", "muon_*", "met_*", "jet*", "bjet*", "ht"],
         "sl_boosted": ["n_*", "electron_*", "muon_*", "met_*", "fatjet_*"],
-        "ml_inputs": ml_inputs.v2,  # should correspond to our currently used ML input features
+        "ml_inputs": ml_inputs.reduced,  # should correspond to our currently used ML input features
         "ml_outputs": ["mlscore.*", "rebinlogit_mlscore.sig*binary"],
         "basic_kin": bracket_expansion([
             "{lepton0,lepton1,jet0,fatjet0}_{pt,eta,phi}",
@@ -474,7 +507,7 @@ def set_config_defaults_and_groups(config_inst):
             "isr_up",
             "fsr_up",
             "top_pt_up",
-            "dy_correction_up",
+            # "dy_correction_up",
             # # experimental unc.
             # "lumi_13p6TeV_2022_up",
             # b-tagging
@@ -521,7 +554,7 @@ def set_config_defaults_and_groups(config_inst):
             "e_reco_sf_up",
             "trigger_sf_up",
             "minbias_xs_up",
-            "dy_correction_up",
+            # "dy_correction_up",
         ],
         "jerc_up": [
             "jer_up",
@@ -557,7 +590,7 @@ def set_config_defaults_and_groups(config_inst):
     # plotting settings groups
     # (used in plotting)
     # cms_label = "wip"
-    cms_label = "pre"
+    cms_label = "pw"
     config_inst.x.general_settings_groups = {
         "test1": {"p1": True, "p2": 5, "p3": "text", "skip_legend": True},
         "default_norm": {"shape_norm": True, "yscale": "log"},
@@ -676,7 +709,7 @@ def set_config_defaults_and_groups(config_inst):
         },
         "boosted_rebin": {
             var: {"rebin": 4}
-            for var in (ml_inputs.v2 + [
+            for var in (ml_inputs.reduced + [
                 "mli_full_vbf_deta",
                 "mli_full_vbf_mass",
                 "mli_ht_alljets",
@@ -696,6 +729,7 @@ def set_config_defaults_and_groups(config_inst):
                 "mlscore.dy_m10toinf",
                 "mlscore.dy",
                 "mlscore.h",
+                "mlscore.hh",
             ]
         },
     }

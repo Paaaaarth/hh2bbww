@@ -403,6 +403,7 @@ class HBWInferenceModelBase(InferenceModel):
                     for config_inst in self.config_insts
                 },
                 "is_signal": ("hhh_" in proc.lower()),
+                "scale": (100 if proc.startswith("hhh_") else 1),
             }
             if self.scale_signal and kwargs["is_signal"]:
                 logger.info(f"Scaling signal process {proc} by factor {self.scale_signal}.")

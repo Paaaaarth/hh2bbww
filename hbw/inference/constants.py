@@ -214,7 +214,7 @@ processes_per_shape = {
     "fsr_H": ["h", "vh", "wh", "zh", "tth", "bbh"],  # NOTE: skip h_ggf and h_vbf because PSWeights missing in H->tautau  # noqa: E501
     # "fsr_h": ["h", "h_ggf", "h_vbf", "vh", "wh", "zh", "tth", "bbh"],
     "top_pt": ["tt"],
-    "dy_correction": ["dy", "dy_lf", "dy_hf"],
+    # "dy_correction": ["dy", "dy_lf", "dy_hf"],
     # "pdf_shape_{proc}": ["{proc}"],
     # "murf_envelope_{proc}": ["{proc}"],
     "pdf_shape_ttbar": ["tt"],

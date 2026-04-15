@@ -58,6 +58,14 @@ def jetId_v12(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     events = set_ak_bool(events, "Jet.TightId", passJetId_Tight)
     events = set_ak_bool(events, "Jet.TightLepVeto", passJetId_TightLepVeto)
 
+    jet_id = ak.where(
+        passJetId_Tight & passJetId_TightLepVeto, 6,
+        ak.where(
+            passJetId_Tight, 2,
+            ak.where(passJetId_TightLepVeto, 4, 0)
+        )
+    )
+    events = set_ak_column(events, "Jet.jetId", jet_id, value_type=np.uint8)
     return events
 
 
@@ -65,8 +73,8 @@ def jetId_v12(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
 def jetId_v12_init(self: Producer) -> None:
     config_inst = getattr(self, "config_inst", None)
 
-    if config_inst and config_inst.campaign.x.version != 12:
-        raise NotImplementedError("jetId_v12 Producer only recommended for Nano v12")
+    # if config_inst and config_inst.campaign.x.version != 12:
+    #     raise NotImplementedError("jetId_v12 Producer only recommended for Nano v12")
 
 
 @jetId_v12.post_init

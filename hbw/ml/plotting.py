@@ -28,10 +28,10 @@ logger = law.logger.get_logger(__name__)
 
 cms_label_kwargs = {
     "data": False,
-    # "llabel": "Private work (CMS simulation)",
+    "llabel": "Private work (CMS simulation)",
     # "llabel": "Simulation work in progress",
-    "llabel": "Simulation preliminary",
-    "lumi": "62",  # NOTE: hard-coded, to be updated if needed
+    # "llabel": "Simulation preliminary",
+    "lumi": "62.4",  # NOTE: hard-coded, to be updated if needed
     # "exp": "",
 }
 if "CMS" in cms_label_kwargs["llabel"]:
@@ -72,6 +72,8 @@ def barplot_from_multidict(dict_of_rankings: dict[str, dict], normalize_weights:
     ax.set_yticks(index - (bar_width * (num_dicts - 1)) / 2)
     ax.set_yticklabels(labels)
     ax.legend()
+    plt.title(r"Private Work (CMS simulation)", loc='left', fontsize=20)
+    plt.title(r"62.4 fb$^{-1}$ (13.6 TeV)", loc='right', fontsize=20)
 
     plt.tight_layout()
 

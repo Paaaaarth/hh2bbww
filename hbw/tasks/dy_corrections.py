@@ -891,7 +891,6 @@ def compute_weight_data(task: ComputeDYWeights, h: hist.Hist) -> dict:
         if njet >= task.rate_factor_overflow:
             rate_factor = rate_factor_lst[task.rate_factor_overflow]
         print(f"Rate factor for njet={njet}: {rate_factor}")
-        from IPython import embed; embed()
         fit_str, param_cov, ptll_bins = get_fit_str(
             njet, task.njet_overflow, rate_factor, h, fit_function9, era, outputs,
         )

@@ -603,9 +603,9 @@ def add_config(
     add_shift_aliases(cfg, "vjets", {"vjets_weight": "vjets_weight_{direction}"})
 
     # DY correction weights
-    cfg.add_shift(name="dy_correction_up", id=13, type="shape")
-    cfg.add_shift(name="dy_correction_down", id=14, type="shape")
-    add_shift_aliases(cfg, "dy_correction", {"dy_correction_weight": "dy_correction_weight_{direction}"})
+    # cfg.add_shift(name="dy_correction_up", id=13, type="shape")
+    # cfg.add_shift(name="dy_correction_down", id=14, type="shape")
+    # add_shift_aliases(cfg, "dy_correction", {"dy_correction_weight": "dy_correction_weight_{direction}"})
 
     # electron scale factor uncertainties
     cfg.add_shift(name="e_sf_up", id=40, type="shape")
@@ -997,6 +997,8 @@ def add_config(
     else:
         raise NotImplementedError(f"No lumi and pu files provided for year {year}")
 
+    # add_external("Optimas", ("path to model", "model version"))
+
     # columns to keep after certain steps
     # TODO: selector-dependent columns should either use the is_sl / is_dl tag or
     #       be implemented as part of the selectors itself (e.g. only SL needs the Lightjet column)
@@ -1069,6 +1071,7 @@ def add_config(
     # Version of required tasks
     cfg.x.versions = {
         "cf.CalibrateEvents": law.config.get_expanded("analysis", "default_common_version", "common2"),
+        "cf.SelectEvents": law.config.get_expanded("analysis", "default_selection_version", "iter2"),
     }
 
     # add categories

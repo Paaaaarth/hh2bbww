@@ -182,14 +182,16 @@ def common_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     for var in ["pt", "eta", "b_score"]:
         events = set_ak_column_f32(events, f"mli_b1_{var}", events.Bjet[:, 0][var])
         events = set_ak_column_f32(events, f"mli_b2_{var}", events.Bjet[:, 1][var])
+        events = set_ak_column_f32(events, f"mli_b3_{var}", events.Bjet[:, 2][var])
+        events = set_ak_column_f32(events, f"mli_b4_{var}", events.Bjet[:, 3][var])
         # even in DL, ~10% of events contain 4 jets, so it might be worth keeping this
         events = set_ak_column_f32(events, f"mli_j1_{var}", events.Lightjet[:, 0][var])
         events = set_ak_column_f32(events, f"mli_j2_{var}", events.Lightjet[:, 1][var])
         # observables for full VBF jets
         if var == "b_score":
             continue
-        events = set_ak_column_f32(events, f"mli_vbfcand1_{var}", events.VBFCandidateJet[:, 0][var])
-        events = set_ak_column_f32(events, f"mli_vbfcand2_{var}", events.VBFCandidateJet[:, 1][var])
+        # events = set_ak_column_f32(events, f"mli_vbfcand1_{var}", events.VBFCandidateJet[:, 0][var])
+        # events = set_ak_column_f32(events, f"mli_vbfcand2_{var}", events.VBFCandidateJet[:, 1][var])
 
     events = set_ak_column_f32(events, "mli_lep_pt", events.Lepton[:, 0].pt)
     events = set_ak_column_f32(events, "mli_lep_eta", events.Lepton[:, 0].eta)
@@ -227,7 +229,7 @@ def common_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     events = set_ak_column_f32(events, "mli_maxdr_jj_alljets", ak.max(dr, axis=1))
 
     # hbb features
-    hbb = (events.Bjet[:, 0] + events.Bjet[:, 1]) * 1  # NOTE: *1 so it is a Lorentzvector not a candidate vector
+    hbb = (events.Bjet[:, 0] + events.Bjet[:, 1] + events.Bjet[:, 2]  + events.Bjet[:, 3]) * 1  # NOTE: *1 so it is a Lorentzvector not a candidate vector
     events = set_ak_column_f32(events, "mli_bb_pt", hbb.pt)
     events = set_ak_column_f32(events, "mli_mbb", hbb.mass)
 
@@ -279,12 +281,8 @@ def common_ml_inputs_init(self: Producer) -> None:
         for var in ["pt", "eta", "phi", "mass", "deta", "tag"]
     ) | set(
         f"mli_{obj}_{var}"
-        for obj in ["b1", "b2", "j1", "j2"]
+        for obj in ["b1", "b2", "b3", "b4", "j1", "j2"]
         for var in ["b_score", "pt", "eta"]
-    ) | set(
-        f"mli_{obj}_{var}"
-        for obj in ["vbfcand1", "vbfcand2"]
-        for var in ["pt", "eta"]
     ) | set(
         f"mli_{obj}_{var}"
         for obj in ["fj"]
@@ -408,7 +406,7 @@ def sl_ml_inputs_init(self: Producer) -> None:
     uses={common_ml_inputs},
     produces={common_ml_inputs},
     # produced columns set in the init function
-    version=law.config.get_expanded("analysis", "dl_ml_inputs_version", 2),
+    version=law.config.get_expanded("analysis", "dl_ml_inputs_version", 3),
 )
 def dl_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     """
@@ -465,7 +463,7 @@ def dl_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     bb_dr = bb_pairs[:, "0"].delta_r(bb_pairs[:, "1"]) 
 
     # pair of least delta R
-    dr_min_idx = ak.argmin(bb_dr, axis=1, keepdims=True)  
+    dr_min_idx = ak.argmin(bb_dr, axis=1, keepdims=True) 
     dr_min_pair = ak.flatten(bb_pairs[dr_min_idx], axis=1)
     bb_dr_sum = dr_min_pair["0"] + dr_min_pair["1"]
 
@@ -489,11 +487,42 @@ def dl_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     bb_dr_max_sum = dr_max_pair["0"] + dr_max_pair["1"]
 
     # pair of least delta R with all jets
-    bb_pairs_all = ak.combinations(events.Jet, 2)
-    bb_dr_all = bb_pairs_all[:, "0"].delta_r(bb_pairs_all[:, "1"]) 
-    dr_min_idx_all = ak.argmin(bb_dr_all, axis=1, keepdims=True)
-    dr_min_pair_all = ak.flatten(bb_pairs_all[dr_min_idx_all], axis=1)
-    bb_dr_all_sum = dr_min_pair_all["0"] + dr_min_pair_all["1"]
+    jj_pairs = ak.combinations(events.Jet, 2)
+    jj_dr = jj_pairs[:, "0"].delta_r(jj_pairs[:, "1"]) 
+    dr_min_idx_jj= ak.argmin(jj_dr, axis=1, keepdims=True)
+    dr_min_pair_jj = ak.flatten(jj_pairs[dr_min_idx_jj], axis=1)
+    jj_dr_sum = dr_min_pair_jj["0"] + dr_min_pair_jj["1"]
+    # # jet_idx = []
+    # print(events.Jet.b_score)
+    # for i in events.Jet.b_score:
+    #     if i not in events.Bjet.b_score:
+    # idx = ak.where(ak.isclose(events.Jet.b_score, events.Jet.b_score))
+    # print(idx)
+    # idx = idx[0][0]
+    # # jet_idx.append(idx)
+    # obj_combinations = ak.combinations([other_pair["0"], other_pair["1"], events.Jet[idx]], 2)
+    # obj_dr = obj_combinations[:, "0"].delta_r(obj_combinations[:, "1"])
+    # obj_dr_min_idx = ak.argmin(obj_dr, axis=1, keepdims=True) 
+    # obj_dr_min_pair = ak.flatten(obj_combinations[obj_dr_min_idx], axis=1)
+    # events = set_ak_column_f32(events, "mli_obj_dr_min", obj_dr_min_pair["0"].delta_r(obj_dr_min_pair["1"]))
+
+
+
+    # Event geometry variables
+    events = set_ak_column_f32(events, "mli_dr_B0_B1", events.Bjet[:, 0].delta_r(events.Bjet[:, 1]))
+    events = set_ak_column_f32(events, "mli_dr_B0_B2", events.Bjet[:, 0].delta_r(events.Bjet[:, 2]))
+    events = set_ak_column_f32(events, "mli_dr_B0_B3", events.Bjet[:, 0].delta_r(events.Bjet[:, 3]))
+    events = set_ak_column_f32(events, "mli_dr_B0_L0", events.Bjet[:, 0].delta_r(events.Lepton[:, 0]))
+    events = set_ak_column_f32(events, "mli_dr_B0_L1", events.Bjet[:, 0].delta_r(events.Lepton[:, 1]))
+    events = set_ak_column_f32(events, "mli_dr_B0_MET", events.Bjet[:, 0].delta_r(events[met_name][:]))
+
+    events = set_ak_column_f32(events, "mli_dp_B0_B1", events.Bjet[:, 0].delta_phi(events.Bjet[:, 1]))
+    events = set_ak_column_f32(events, "mli_dp_B0_B2", events.Bjet[:, 0].delta_phi(events.Bjet[:, 2]))
+    events = set_ak_column_f32(events, "mli_dp_B0_B3", events.Bjet[:, 0].delta_phi(events.Bjet[:, 3]))
+    events = set_ak_column_f32(events, "mli_dp_B0_L0", events.Bjet[:, 0].delta_phi(events.Lepton[:, 0]))
+    events = set_ak_column_f32(events, "mli_dp_B0_L1", events.Bjet[:, 0].delta_phi(events.Lepton[:, 1]))
+    events = set_ak_column_f32(events, "mli_dp_B0_MET", events.Bjet[:, 0].delta_phi(events[met_name][:]))
+
 
     events = set_ak_column_f32(events, "mli_mbb_sum", bb_sum.mass)
     events = set_ak_column_f32(events, "mli_mbb_sum_2", bb_sum_2.mass)
@@ -501,9 +530,14 @@ def dl_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     events = set_ak_column_f32(events, "mli_mbb_dr_sum_2", bb_dr_sum_2.mass)
     events = set_ak_column_f32(events, "mli_mbb_remaining", bb_remaining.mass)
     events = set_ak_column_f32(events, "mli_mbb_dr_max_sum", bb_dr_max_sum.mass)
-    events = set_ak_column_f32(events, "mli_mbb_dr_all_sum", bb_dr_all_sum.mass)
+    events = set_ak_column_f32(events, "mli_mbb_dr_all_sum", jj_dr_sum.mass)
     events = set_ak_column_f32(events, "mli_hh_dr", hh_dr)
     events = set_ak_column_f32(events, "mli_dr_h_ll", bb_dr_sum.delta_r(hll))
+
+    # delta R related variables for jets and bjets
+    events = set_ak_column_f32(events, "mli_bb_dr_min", dr_min_pair["0"].delta_r(dr_min_pair["1"]))
+    events = set_ak_column_f32(events, "mli_bb_dr_other", other_pair["0"].delta_r(other_pair["1"]))
+    events = set_ak_column_f32(events, "mli_jj_dr_min", dr_min_pair_jj["0"].delta_r(dr_min_pair_jj["1"]))
 
     # # Inspired by the paper (https://www.desy.de/f/students/2018/reports/LivVage.pdf)
     # mbb_pair_sum = (bb_pairs[:, "0"] + bb_pairs[:, "1"]).mass
@@ -527,6 +561,9 @@ def dl_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     events = set_ak_column_f32(events, "mli_lb_indv_mass_2l", (events.Lepton[:, 0] * 2).mass + (events.Bjet[:, 0] * 1).mass)
     events = set_ak_column_f32(events, "mli_lb_indv_pt_2l", (events.Lepton[:, 0] * 2).pt + (events.Bjet[:, 0] * 1).pt)
 
+    #### DPG test
+
+
     # General Test variables
 
     # lb_pairs = [[events.Lepton[:, 0], other_pair["0"]], [events.Lepton[:, 0], other_pair["1"]],
@@ -542,6 +579,7 @@ def dl_ml_inputs(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     events = set_ak_column_f32(events, "mli_lb_top_2l", ((events.Lepton[:, 0] * 2)+ (other_pair["0"] * 1)).mass)
     events = set_ak_column_f32(events, "mli_lb_top_indv_2b", ((events.Lepton[:, 0] * 1).mass)+ ((other_pair["0"] * 2).mass))
     events = set_ak_column_f32(events, "mli_lb_top_2b", ((events.Lepton[:, 0] * 1)+ (other_pair["0"] * 2)).mass)  
+    events = set_ak_column_f32(events, "mli_dr_llbb",abs(ak.min(bb_dr)/events.Lepton[:, 0].delta_r(events.Lepton[:, 1])))  
 
     # fill nan/none values of all produced columns
     for col in self.ml_input_columns:
@@ -572,8 +610,15 @@ def dl_ml_inputs_init(self: Producer) -> None:
         "mli_lb_indv_pt", "mli_lb_pt", "mli_lb_indv_mass",
         "mli_lb_mass", "mli_lb_pt_2l", "mli_lb_mass_2l", "mli_lb_indv_pt_2l", "mli_lb_indv_mass_2l",
         "mli_lb_top", "mli_lb_top_indv", "mli_lb_top_2l", "mli_lb_top_indv_2l",
-        "mli_lb_top_2b", "mli_lb_top_indv_2b",
-    }
+        "mli_lb_top_2b", "mli_lb_top_indv_2b", "mli_bb_dr_min", "mli_bb_dr_other",
+        "mli_jj_dr_min", "mli_dr_llbb"
+    } | set(
+        f"mli_dr_B0_{obj_name}"
+        for obj_name in ["B1", "B2", "B3", "L0", "L1", "MET"]
+    )| set(
+        f"mli_dp_B0_{obj_name}"
+        for obj_name in ["B1", "B2", "B3", "L0", "L1", "MET"]
+    )
     self.produces |= self.ml_input_columns
 
     # bookkeep used ml_input_columns over multiple Producers

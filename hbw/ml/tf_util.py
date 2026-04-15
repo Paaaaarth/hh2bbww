@@ -176,7 +176,8 @@ class MultiDataset(object):
         else:
             # for validation, use reasonable batch sizes instead of massive batches
             datasets = [
-                dataset.batch(count // self.iter_smallest_process)
+                # dataset.batch(count // self.iter_smallest_process)
+                dataset.batch(max(1, count // self.iter_smallest_process))
                 for dataset, count in zip(datasets, self.counts)
             ]
 
@@ -250,7 +251,10 @@ class MultiDataset(object):
         from different batch shapes creating new computation graphs
         """
         return tuple(
-            tf.concat([batch[i] for batch in dataset_batches], axis=0)
+            tf.concat([
+                tf.cast(batch[i], tf.float64) 
+                for batch in dataset_batches
+            ], axis=0)
             for i in range(self.tuple_length)
         )
 

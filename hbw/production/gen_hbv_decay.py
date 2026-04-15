@@ -64,21 +64,21 @@ def gen_hbv_decay(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     # find hard Higgs bosons
     h = gp[abs_id == 25]
     nh = ak.num(h, axis=1)
-    all_or_raise(nh == 2, "number of Higgs != 2")
+    # all_or_raise(nh == 3, "number of Higgs != 3")
 
     # bottoms from H decay
     b = gp[abs_id == 5]
     b = b[(abs(b.distinctParent.pdgId) == 25)]
     b = b[~ak.is_none(b, axis=1)]
     nb = ak.num(b, axis=1)
-    all_or_raise(nb == 2, "number of bottom quarks from Higgs decay != 2")
+    # all_or_raise(nb == 4, "number of bottom quarks from Higgs decay != 4")
 
     # Ws or Zs from H decay
     v = gp[(abs_id == 24) | (abs_id == 23)]
     v = v[(abs(v.distinctParent.pdgId) == 25)]
     v = v[~ak.is_none(v, axis=1)]
     nv = ak.num(v, axis=1)
-    all_or_raise(nv == 2, "number of Vector bosons from Higgs decay != 2")
+    # all_or_raise(nv == 2, "number of Vector bosons from Higgs decay != 2")
 
     # leptons from W decays
     is_lepton = (abs_id >= 11) & (abs_id <= 16)
@@ -87,8 +87,8 @@ def gen_hbv_decay(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     vdecays = vdecays[(abs(vdecays.distinctParent.pdgId) == 24) | (abs(vdecays.distinctParent.pdgId) == 23)]
     vdecays = vdecays[~ak.is_none(vdecays, axis=1)]
     nvdecays = ak.num(vdecays, axis=1)
-    all_or_raise((nvdecays % 2) == 0, "number of leptons or quarks from V decays is not dividable by 2")
-    all_or_raise(nvdecays == 4, "number of leptons or quarks from V decays != 4")
+    # all_or_raise((nvdecays % 2) == 0, "number of leptons or quarks from V decays is not dividable by 2")
+    # all_or_raise(nvdecays == 6, "number of leptons or quarks from V decays != 6")
 
     # check if decay product charges are valid
     sign = lambda part: (part.pdgId > 0) * 2 - 1
@@ -96,6 +96,8 @@ def gen_hbv_decay(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
 
     b1 = b[:, 0]
     b2 = b[:, 1]
+    b3 = b[:, 2]
+    b4 = b[:, 3]
     v1 = v[:, 0]
     v2 = v[:, 1]
 
@@ -120,8 +122,11 @@ def gen_hbv_decay(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
     hhgen = {
         "h1": h[:, 0],
         "h2": h[:, 1],
+        "h3": h[:, 2],
         "b1": b1,
         "b2": b2,
+        "b3": b3,
+        "b4": b4,
         "v1": v1,
         "v2": v2,
         "v1d1": v1decays[:, 0],
@@ -143,7 +148,7 @@ def gen_hbv_decay(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
 @gen_hbv_decay.skip
 def gen_hbv_decay_skip(self: Producer) -> ak.Array:
     # skip Producer if the dataset is not a HH->bbWW dataset
-    return not self.dataset_inst.has_tag("is_hbv")
+    return not self.dataset_inst.has_tag("is_signal")
 
 
 @gen_hbv_decay.init
@@ -161,6 +166,7 @@ def gen_hbv_decay_init(self: Producer) -> None:
         "gen_hbw.lep1.{pt,eta,phi,mass,pdgId}",
         "gen_hbw.dilep.{pt,eta,phi,mass}",
         "gen_hbw.hh.{pt,eta,phi,mass}",
+        "gen_hbw.bb.{dr12,dr23,dr34,mass12,mass23,mass34}",
     },
 )
 def gen_hbw_decay_features(self: Producer, events: ak.Array, **kwargs) -> ak.Array:
@@ -189,6 +195,7 @@ def gen_hbw_decay_features(self: Producer, events: ak.Array, **kwargs) -> ak.Arr
     )
 
     events = set_ak_column(events, "gen_hbw.hh", gp.h1 + gp.h2)
+    events = set_ak_column(events, "gen_hbw.bb", gp.b1 + gp.b2)
 
     events = set_ak_column(events, "gen_hbw.lep0", leading_lep)
     events = set_ak_column(events, "gen_hbw.lep1", subleading_lep)
@@ -205,6 +212,12 @@ def gen_hbw_decay_features(self: Producer, events: ak.Array, **kwargs) -> ak.Arr
     events = set_ak_column_f32(events, "gen_hbw.dilep.pt", events.gen_hbw.dilep.pt)
     events = set_ak_column_f32(events, "gen_hbw.hh.mass", events.gen_hbw.hh.mass)
     events = set_ak_column_f32(events, "gen_hbw.dilep.mass", events.gen_hbw.dilep.mass)
+    events = set_ak_column_f32(events, "gen_hbw.bb.dr12", gp.b1.delta_r(gp.b2))
+    events = set_ak_column_f32(events, "gen_hbw.bb.dr23", gp.b2.delta_r(gp.b3))
+    events = set_ak_column_f32(events, "gen_hbw.bb.dr34", gp.b3.delta_r(gp.b4))
+    events = set_ak_column_f32(events, "gen_hbw.bb.mass12", (gp.b1 + gp.b2).mass)
+    events = set_ak_column_f32(events, "gen_hbw.bb.mass23", (gp.b2 + gp.b3).mass)
+    events = set_ak_column_f32(events, "gen_hbw.bb.mass34", (gp.b3 + gp.b4).mass)
     for route in self.produced_columns:
         if not has_ak_column(events, route):
             logger.warning(f"Produced column {route} is missing")
@@ -273,6 +286,45 @@ def gen_hbw_decay_features_init(self: Producer) -> None:
             binning=(80, 0., 800.),
             unit="GeV",
             x_title=r"$m_{hh}^{gen}$",
+            aux={"overflow": True, "rebin": 2},
+        )
+        config.add_variable(
+            name="gen_hbw.bb.dr12",
+            binning=(40, 0, 10),
+            x_title=r"$\Delta \, R_{bb}^{gen}$",
+            aux={"overflow": True},
+        )
+        config.add_variable(
+            name="gen_hbw.bb.dr23",
+            binning=(40, 0, 10),
+            x_title=r"$\Delta \, R_{bb}^{gen}$",
+            aux={"overflow": True},
+        )
+        config.add_variable(
+            name="gen_hbw.bb.dr34",
+            binning=(40, 0, 10),
+            x_title=r"$\Delta \, R_{bb}^{gen}$",
+            aux={"overflow": True},
+        )
+        config.add_variable(
+            name="gen_hbw.bb.mass12",
+            binning=(80, 0., 400.),
+            unit="GeV",
+            x_title=r"$m_{bb}^{gen}$",
+            aux={"overflow": True, "rebin": 2},
+        )
+        config.add_variable(
+            name="gen_hbw.bb.mass23",
+            binning=(80, 0., 400.),
+            unit="GeV",
+            x_title=r"$m_{bb}^{gen}$",
+            aux={"overflow": True, "rebin": 2},
+        )
+        config.add_variable(
+            name="gen_hbw.bb.mass34",
+            binning=(80, 0., 400.),
+            unit="GeV",
+            x_title=r"$m_{bb}^{gen}$",
             aux={"overflow": True, "rebin": 2},
         )
 

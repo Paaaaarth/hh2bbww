@@ -189,6 +189,214 @@ def get_rebin_values(
     logger.info(f"final bin edges: {rebin_values}")
     return rebin_values
 
+##### s over b binning #######
+import logging
+
+logger = logging.getLogger(__name__)
+
+def get_rebin_values_sob(
+        rebin_hist,
+        signal_hist,
+        background_hist,
+        N_bins_final: int = 10,
+        min_bkg_events: int = 10,
+        blinding_threshold: float | None = None,
+):
+    """
+    Function that determines how to rebin a histogram to *N_bins_final* bins such that
+    the resulting histogram has a flat Signal / sqrt(Background) distribution.
+    """
+    msg = f"Rebinning histogram {rebin_hist.name} to {N_bins_final} bins for flat S/sqrt(B)."
+    if min_bkg_events:
+        msg += f" Requires at least {min_bkg_events} background events per bin."
+    if blinding_threshold:
+        msg += f" Blinding threshold is set to {blinding_threshold}."
+    logger.info(msg)
+    
+    N_bins_input = rebin_hist.axes[0].size
+    if N_bins_input != background_hist.axes[0].size:
+        raise ValueError(
+            f"Input histogram has {N_bins_input} bins, but background "
+            f"histogram has {background_hist.axes[0].size} bins"
+        )
+
+    # Bookkeeping
+    bin_count = 1
+    N_signal = 0
+    N_bkg_value = N_bkg_variance = 0
+
+    x_max = rebin_hist.axes[0].edges[N_bins_input]
+    x_min = rebin_hist.axes[0].edges[0]
+    rebin_values = [x_max]
+
+    background_view = background_hist.view()
+    signal_view = signal_hist.view()
+
+    # Calculate the total signal and background in the active range (excluding under/overflow)
+    # We will decrement these as we form bins to dynamically adjust the target
+    remaining_signal = np.sum(signal_view["value"][1:N_bins_input])
+    remaining_bkg = np.sum(background_view["value"][1:N_bins_input])
+
+    # Helper function to safely calculate significance
+    def get_significance(s, b):
+        return s / np.sqrt(b) if (b > 0 and s > 0) else 0.0
+
+    max_error = lambda value: value ** 2 / min_bkg_events
+
+    blind_bool_func = lambda s_val, b_val: (
+        get_significance(s_val, b_val) >= blinding_threshold
+        if blinding_threshold else False
+    )
+
+    # Loop backwards from highest score to lowest
+    for i in range(N_bins_input - 1, 0, -1):
+        if bin_count == N_bins_final:
+            # Break as soon as N-1 bin edges have been determined
+            break
+
+        N_signal += signal_view["value"][i]
+        N_bkg_value += background_view["value"][i]
+        N_bkg_variance += background_view["variance"][i]
+
+        current_sig = get_significance(N_signal, N_bkg_value)
+        
+        # Calculate the dynamic target significance for this specific bin
+        bins_left = N_bins_final - bin_count + 1
+        target_sig = get_significance(remaining_signal, remaining_bkg) / np.sqrt(bins_left)
+
+        if i % 100 == 0:
+            logger.info(f"//////////// Bin {i} of {N_bins_input}, Current S/sqrt(B): {round(current_sig, 3)}")
+
+        # Check if we have accumulated enough significance
+        if current_sig >= target_sig and N_bkg_value > 0:
+            
+            # Check if background variance is small enough
+            if N_bkg_variance < max_error(N_bkg_value):
+                this_edge = rebin_hist.axes[0].edges[i]
+                logger.info(
+                    f"++++++++++ Append bin edge {bin_count} of {N_bins_final} at edge "
+                    f"{this_edge} with S/sqrt(B) = {round(current_sig, 3)}",
+                )
+
+                # Check if this bin should be blinded
+                should_be_blinded = blind_bool_func(N_signal, N_bkg_value)
+                if should_be_blinded:
+                    logger.warning(f"Blinding condition fulfilled, first bin edge is set to {this_edge}")
+                    rebin_values = []
+
+                # Append bin edge
+                rebin_values.append(this_edge)
+                
+                # Deduct the used signal and background from the remaining pool
+                remaining_signal -= N_signal
+                remaining_bkg -= N_bkg_value
+                
+                # Reset counters for the next bin
+                bin_count += 1
+                N_signal = N_bkg_value = N_bkg_variance = 0
+            else:
+                this_edge = rebin_hist.axes[0].edges[i]
+                logger.warning(
+                    f"Background variance {N_bkg_variance} is too large for bin {i} with value {N_bkg_value}, "
+                    f"skipping bin edge {this_edge}"
+                )
+
+    rebin_values.append(x_min)
+    
+    # Change order of the bin edges to be ascending
+    rebin_values = rebin_values[::-1]
+    logger.info(f"Final bin edges: {rebin_values}")
+    
+    return rebin_values
+
+##### s over b = 3 binning #######
+
+
+# def get_rebin_values(
+#         rebin_hist,
+#         signal_hist,
+#         background_hist,
+#         N_bins_final: int = 10,
+#         blinding_threshold: float | None = None,
+#         target_sigma: float = 3.0,
+# ):
+#     """
+#     Function that determines how to rebin a histogram to at most *N_bins_final* bins
+#     such that each bin achieves a target S/sqrt(B) significance (default: 3 sigma).
+#     """
+#     msg = (
+#         f"Rebinning histogram {rebin_hist.name} targeting {target_sigma}σ significance "
+#         f"per bin (max {N_bins_final} bins)."
+#     )
+#     if blinding_threshold:
+#         msg += f" Blinding threshold is set to {blinding_threshold}."
+#     logger.info(msg)
+
+#     N_bins_input = rebin_hist.axes[0].size
+#     if N_bins_input != background_hist.axes[0].size:
+#         raise ValueError(
+#             f"Input histogram has {N_bins_input} bins, but background "
+#             f"histogram has {background_hist.axes[0].size} bins"
+#         )
+
+#     bin_count = 1
+#     N_signal = 0
+#     N_bkg_value = 0
+
+#     x_max = rebin_hist.axes[0].edges[N_bins_input]
+#     x_min = rebin_hist.axes[0].edges[0]
+#     rebin_values = [x_max]
+
+#     background_view = background_hist.view()
+#     signal_view = signal_hist.view()
+
+#     def get_significance(s, b):
+#         return s / np.sqrt(b) if (b > 0 and s > 0) else 0.0
+
+#     blind_bool_func = lambda s_val, b_val: (
+#         get_significance(s_val, b_val) >= blinding_threshold
+#         if blinding_threshold else False
+#     )
+
+#     for i in range(N_bins_input - 1, 0, -1):
+#         if bin_count == N_bins_final:
+#             break
+
+#         N_signal += signal_view["value"][i]
+#         N_bkg_value += background_view["value"][i]
+
+#         current_sig = get_significance(N_signal, N_bkg_value)
+
+#         if i % 100 == 0:
+#             logger.info(
+#                 f"//////////// Bin {i} of {N_bins_input}, "
+#                 f"Current S/sqrt(B): {round(current_sig, 3)}"
+#             )
+
+#         if current_sig >= target_sigma and N_bkg_value > 0:
+#             this_edge = rebin_hist.axes[0].edges[i]
+#             logger.info(
+#                 f"++++++++++ Append bin edge {bin_count} of {N_bins_final} at "
+#                 f"edge {this_edge} with S/sqrt(B) = {round(current_sig, 3)}",
+#             )
+
+#             should_be_blinded = blind_bool_func(N_signal, N_bkg_value)
+#             if should_be_blinded:
+#                 logger.warning(
+#                     f"Blinding condition fulfilled, first bin edge is set to {this_edge}"
+#                 )
+#                 rebin_values = []
+
+#             rebin_values.append(this_edge)
+#             bin_count += 1
+#             N_signal = N_bkg_value = 0
+
+#     rebin_values.append(x_min)
+#     rebin_values = rebin_values[::-1]
+#     logger.info(f"Final bin edges: {rebin_values}")
+
+#     return rebin_values
+
 
 def resolve_category_groups(param: dict[str, any], config_inst: od.Config):
     """
@@ -298,7 +506,7 @@ class ModifyDatacardsFlatRebin(
         )
         return params
 
-    def get_n_bins(self, DEFAULT_N_BINS=8):
+    def get_n_bins(self, DEFAULT_N_BINS=1):
         """ Method to get the requested number of bins for the current category. Defaults to *DEFAULT_N_BINS*"""
         # NOTE: we assume single config here...
         config_category = self.branch_data.inf_cat.config_data[self.config_insts[0].name].category
@@ -353,7 +561,7 @@ class ModifyDatacardsFlatRebin(
         signal_processes = [
             proc for proc in self.branch_data.inf_cat.processes.copy()
             if proc.is_signal and (
-                proc.name.startswith("ggHH_kl_1_kt_1") or proc.name.startswith("qqHH_CV_1_C2V_1_kl_1")
+                proc.name.startswith("hhh")
             )
         ]
         return signal_processes
@@ -483,14 +691,26 @@ class ModifyDatacardsFlatRebin(
                     blinding_threshold = 0.008
             else:
                 blinding_threshold = None
-            rebin_values = get_rebin_values(
-                rebin_hist,
-                signal_hist,
-                background_hist,
-                N_bins_final=self.get_n_bins(),
-                min_bkg_events=self.min_bkg_events,
-                blinding_threshold=blinding_threshold,
-            )
+            if cat_name == "sr__2b__ml_sig_all":
+                rebin_values = get_rebin_values_sob(
+                    rebin_hist,
+                    signal_hist,
+                    background_hist,
+                    # N_bins_final=self.get_n_bins(),
+                    N_bins_final=5,
+                    min_bkg_events=self.min_bkg_events,
+                    blinding_threshold=blinding_threshold,
+                )
+            else:
+                rebin_values = get_rebin_values(
+                    rebin_hist,
+                    signal_hist,
+                    background_hist,
+                    N_bins_final=self.get_n_bins(),
+                    min_bkg_events=self.min_bkg_events,
+                    blinding_threshold=blinding_threshold,
+                )
+
             outputs["edges"].dump(rebin_values, formatter="json")
 
             # apply rebinning on all histograms and store resulting hists in a ROOT file
@@ -774,576 +994,749 @@ class PlotShiftedInferencePlots(
             )
 
 
+# class PrepareInferenceTaskCalls(
+#     HBWInferenceModelBase,
+#     InferenceModelClassMixin,
+# ):
+#     """
+#     Simple task that produces string to run certain tasks in Inference
+#     """
+#     # upstream requirements
+#     reqs = Requirements(
+#         ModifyDatacardsFlatRebin=ModifyDatacardsFlatRebin,
+#     )
+
+#     # output_collection_cls = law.NestedSiblingFileCollection
+#     config_groups = law.MultiCSVParameter(
+#         # default=(("c22prev14", "c22postv14"), ("c23prev14", "c23postv14")),
+#         # default=(("c22prev14", "c22postv14", "c23prev14", "c23postv14"),),
+#         default=(("c22postv14"),),
+#         description="List of config groups to use for this task.",
+#         significant=False,
+#     )
+
+#     requested_keys = law.CSVParameter(
+#         default=[
+#             "prepare_cards",
+#             # "LimitsPerCategory",
+#             # "qqHH_LimitsPerCategory",
+#             # "LimitsPerCampaign",
+#             "pointlimits",
+#             "qqhh_pointlimits",
+#             "impacts",
+#             # "likelihood_r",
+#             "postfitshapes",
+#             "prefitshapes",
+#             "likelihood_kl",
+#             "likelihood_c2v",
+#             "likelihood_kl_c2v",
+#             # "likelihood_kl_kt",
+#             "limits_kl",
+#             "limits_c2v",
+#             "gof",
+#             # "multilimits_c2v",
+#             # "multilimits_kl",
+#             # "qqhh_multilimits_c2v",
+#             # "qqhh_multilimits_kl",
+#         ],
+#         description="List of inference task keys to prepare calls for.",
+#         significant=False,
+#     )
+#     rerun = luigi.BoolParameter(
+#         default=False,
+#         description="Whether to rerun the tasks even if their output exists.",
+#         significant=False,
+#     )
+#     # systematics that are frozen for kl and c2v scans
+#     frozen_for_scans = ",".join([
+#         "THU_HH", "pdf_Higgs_hh_vbf", "pdf_Higgs_hh_ggf", "QCDscale_hh_vbf",
+#         "BR_hbb", "BR_hww", "BR_hzz", "BR_htt", "BR_hgg",
+#     ])
+
+#     cards_version = luigi.Parameter(
+#         default="",
+#         description="Optional version string to append to the datacard output path.",
+#         significant=True,
+#     )
+
+#     # # TODO: add param to not delete existing cards each time :)
+#     recreate_datacards = luigi.BoolParameter(
+#         default=False,
+#         description="Whether to recreate only the Run.sh script.",
+#         significant=False,
+#     )
+#     run_script_name = luigi.Parameter(
+#         default="Run.sh",
+#         description="Name of the run script to create.",
+#         significant=True,
+#     )
+
+#     @classmethod
+#     def resolve_instances(cls, params: dict[str, Any], shifts: TaskShifts) -> dict[str, Any]:
+#         # params["known_shifts"] = shifts
+
+#         # TODO: freeze stuff inst dict
+
+#         for config_group in params["config_groups"]:
+#             _params = params.copy()
+#             _params["configs"] = config_group
+#             _params["config_insts"] = [
+#                 config_inst for config_inst in params["config_insts"]
+#                 if config_inst.name in config_group
+#             ]
+#             _params["inst_dict"] = {
+#                 "configs": _params["configs"],
+#                 "config_insts": _params["config_insts"],
+#             }
+#             cls.reqs.ModifyDatacardsFlatRebin.resolve_instances(_params, shifts)
+
+#         return params
+
+#     @classmethod
+#     def modify_param_values(cls, params: dict[str, Any]) -> dict[str, Any]:
+#         if params["config_groups"]:
+#             configs = tuple(config for config_group in params["config_groups"] for config in config_group)
+#             if configs != params["configs"]:
+#                 logger.warning_once(
+#                     f"update_configs_{params['configs']}_from_groups_{params['config_groups']}",
+#                     f"Overwriting 'configs' parameter with values {configs} because "
+#                     f"'config_groups' parameter with values {params['config_groups']} will be used.",
+#                 )
+#                 params["configs"] = configs
+#         return super().modify_param_values(params)
+
+#     def workflow_requires(self):
+#         reqs = super().workflow_requires()
+#         for config_group in self.config_groups:
+#             config_repr = self.configs_str(config_group)
+#             reqs[f"rebinned_datacards__{config_repr}"] = self.reqs.ModifyDatacardsFlatRebin.req(
+#                 self,
+#                 configs=config_group,
+#                 # config_insts=[config_inst for config_inst in self.config_insts if config_inst.name in config_group],
+#             )
+
+#         return reqs
+
+#     def requires(self):
+#         reqs = {}
+#         for config_group in self.config_groups:
+#             config_repr = self.configs_str(config_group)
+#             reqs[f"rebinned_datacards__{config_repr}"] = self.reqs.ModifyDatacardsFlatRebin.req(
+#                 self,
+#                 configs=config_group,
+#                 # config_insts=[config_inst for config_inst in self.config_insts if config_inst.name in config_group],
+#             )
+#         return reqs
+
+#     @property
+#     def config_groups_str(self):
+#         return [self.configs_str(configs) for configs in self.config_groups]
+
+#     def store_parts(self):
+#         parts = super().store_parts()
+#         cards_repr = "__".join(self.config_groups_str)
+#         if self.cards_version:
+#             cards_repr += f"__{self.cards_version}"
+#         parts.insert_before("version", "config_group", cards_repr)
+#         return parts
+
+#     def output(self):
+#         # TODO: should add configs_str to output path
+#         output = {
+#             "Run": self.target(self.run_script_name),
+#         }
+#         self.cards_target = self.target("datacards", dir=True)
+#         if self.recreate_datacards:
+#             output["datacards"] = self.cards_target
+#         return output
+
+#     def run(self):
+#         inputs = self.input()
+#         output = self.output()
+
+#         card_fns = []
+#         for key, value in inputs.items():
+#             recreate_cards = self.recreate_datacards or not self.cards_target.exists()
+#             if not key.startswith("rebinned_datacards__"):
+#                 continue
+#             for target in value.collection.targets.values():
+#                 card_fns.append(target["card"].basename)
+#                 if recreate_cards:
+#                     logger.info(f"Copying datacard for target {target['card'].basename} to {self.cards_target.abspath}")
+#                     target["card"].copy_to(self.cards_target)
+#                     target["shapes"].copy_to(self.cards_target)
+#                     target["inspection"].copy_to(self.cards_target)
+
+#         # string that represents the version of datacards
+#         identifier_list = [*self.config_groups_str, self.inference_model_cls.__str__()]
+#         if self.cards_version:
+#             identifier_list.append(self.cards_version)
+#         identifier = "__".join(identifier_list)
+
+#         # TODO: copy datacards to this output
+
+#         # TODO: merge collections from different config groups
+#         # TODO: get rid of inference_model_inst usage
+#         # get the datacard names from the inputs
+#         # collection = inputs["rebinned_datacards"]["collection"]
+#         # cards_path = {collection[key]["card"].dirname for key in collection.keys()}
+#         # if len(cards_path) != 1:
+#         #     raise Exception("Expected only one datacard path")
+#         # cards_path = cards_path.pop()
+
+#         cards_path = self.cards_target.abspath
+#         decorrelated_cards_path = f"{cards_path}/decorrelated"
+
+#         # card_fns = [collection[key]["card"].basename for key in collection.keys()]
+
+#         # get the category names from the inference models
+#         cat_names = self.inference_model_cls.config_categories
+#         cat_names = [f"{cat_name}__{year}" for year in self.config_groups_str for cat_name in cat_names]
+
+#         # combine category names with card fn to a single string
+#         datacards = ",".join([f"{cat_name}=$CARDS_PATH/{card_fn}" for cat_name, card_fn in zip(cat_names, card_fns)])
+#         datacards_per_year = ":".join([",".join(
+#             [card for card in datacards.split(",") if year in card],
+#         ) for year in self.config_groups_str])
+
+#         # # name of the output root file that contains the Pre+Postfit shapes
+#         # output_file = ""
+
+#         # prepare the base command to set the environment variables
+#         base_cmd = f"export BASE_CARDS_PATH={cards_path}" + "\n" + f"export CARDS_PATH={decorrelated_cards_path}" + "\n"
+#         export_and_prepare_cards_cmd = base_cmd
+#         cmd_dict = {}
+
+#         # prepare strings for campaign name and card names
+#         if len(self.configs) == 4:
+#             campaign = "run3"
+#         elif len(self.configs) == 1:
+#             campaign = self.configs[0]
+#         else:
+#             lumi = sum([config_inst.x.luminosity.get("nominal") for config_inst in self.config_insts]) * 0.001
+#             campaign = f"'{lumi:.1f} fb^{{-1}}'"
+
+#         is_signal_region = lambda cat_name: (
+#             "sig_" in cat_name or cat_name == "sr__boosted" or "hh_ggf_" in cat_name or "hh_vbf_" in cat_name
+#         )
+
+#         # creating limits per signal region vs all 1b regions vs all 2b regions vs all regions combined
+#         multi_sig_cards = ":".join([
+#             f"{cat_name}=$CARDS_PATH/{card_fn}"
+#             for cat_name, card_fn in zip(cat_names, card_fns) if is_signal_region(cat_name)
+#         ])
+#         multi_sig_card_names = ",".join([
+#             cat_name for cat_name in cat_names if is_signal_region(cat_name)
+#         ])
+#         # cards_vbf = ",".join([
+#         #     f"{cat_name}=$CARDS_PATH/{card_fn}" for cat_name, card_fn in zip(cat_names, card_fns) if "ggf" not in cat_name  # noqa: E501
+#         # ])
+#         # cards_ggf = ",".join([
+#         #     f"{cat_name}=$CARDS_PATH/{card_fn}" for cat_name, card_fn in zip(cat_names, card_fns) if "vbf" not in cat_name  # noqa: E501
+#         # ])
+#         cards_1b = ",".join([
+#             f"{cat_name}=$CARDS_PATH/{card_fn}" for cat_name, card_fn in zip(cat_names, card_fns) if "1b" in cat_name
+#         ])
+#         cards_2b = ",".join([
+#             f"{cat_name}=$CARDS_PATH/{card_fn}" for cat_name, card_fn in zip(cat_names, card_fns) if "2b" in cat_name
+#         ])
+#         cards_boosted = ",".join([
+#             f"{cat_name}=$CARDS_PATH/{card_fn}"
+#             for cat_name, card_fn in zip(cat_names, card_fns) if "boosted" in cat_name
+#         ])
+
+#         # NOTE: we could replace e.g. {datacards} with $CARDS in the commands below
+#         cards_dict = {
+#             "CARDS": datacards,
+#             "CARDSB": cards_1b,
+#             "CARDSBB": cards_2b,
+#             "CARDSBoost": cards_boosted,
+#         }
+#         export_cards_combinations = "\n".join(f"export {key}={value}" for key, value in cards_dict.items())
+#         cmd_dict["export"] = "\n".join([base_cmd, export_cards_combinations])
+
+#         multi_datacards = []
+#         multi_datacard_names = []
+#         for cards, this_identifier in [
+#             (multi_sig_cards, multi_sig_card_names),
+#             (cards_1b, "1b_combined"),
+#             (cards_2b, "2b_combined"),
+#             (cards_boosted, "boosted_combined"),
+#             (datacards, identifier),
+#         ]:
+#             if cards:
+#                 multi_datacards.append(cards)
+#                 multi_datacard_names.append(this_identifier)
+
+#         multi_datacards = ":".join(multi_datacards)
+#         multi_datacard_names = ",".join(multi_datacard_names)
+
+#         # run pruning helper on cards
+#         prepare_cards = []
+#         for card_fn in card_fns:
+#             cmd = f"prepare_cards.py $BASE_CARDS_PATH/{card_fn}"
+#             export_and_prepare_cards_cmd += cmd + "\n"
+#             prepare_cards.append(cmd)
+#         # cmd_dict["prepare_cards"] = "\n".joiyn(prepare_cards)
+#         # prepare first card to avoid runtime issues of folder creation
+#         cmd_dict["prepare_cards"] = prepare_cards[0] + "\n" + " & ".join(prepare_cards)
+#         cmd_dict["prepare_cards"] += " & wait"
+#         print("\n\n")
+#         print(export_and_prepare_cards_cmd)
+
+#         base_cmd = f"export CARDS_PATH={decorrelated_cards_path}" + "\n"
+
+#         # print(base_cmd)
+#         # for card, _ident in zip(card_fns, identifier):
+#         #     cmd = f"ValidateDatacard.py $CARDS_PATH/{card} --jsonFile $CARDS_PATH//validation_{_ident}.json"
+#         #     print(cmd)
+#         # print("\n\n")
+
+#         # fetch card combination
+#         cmd = (
+#             f"law run CombineDatacards --version {identifier} --datacards {datacards} "
+#         )
+#         cmd_dict["combine_cards"] = cmd
+
+#         # creating upper limits for kl=1
+#         cmd = (
+#             f"law run PlotUpperLimitsAtPoint --version {identifier} --campaign {campaign} "
+#             f"--multi-datacards {multi_datacards} "
+#             f"--datacard-names {multi_datacard_names} "
+#             # f"--UpperLimits-workflow htcondor "
+#             f"--workers 10 "
+#         )
+#         if self.partially_unblinded or self.fully_unblinded:
+#             cmd += "--unblinded True "
+#         if not self.partially_unblinded:
+#             print(base_cmd + cmd, "\n\n")
+#             cmd_dict["LimitsPerCategory"] = cmd
+#             cmd_dict["qqHH_LimitsPerCategory"] = cmd + "--pois r_qqhh "
+
+#         # creating upper limits for kl=1 with clean signal regions only
+#         cmd = (
+#             f"law run PlotUpperLimitsAtPoint --version {identifier} --campaign {campaign} "
+#             f"--multi-datacards {cards_1b}:{cards_2b}:{cards_boosted}:{datacards} "
+#             f"--datacard-names 1b,2b,Boosted,Combined "
+#             # f"--UpperLimits-workflow htcondor "
+#             f"--workers 10 "
+#         )
+#         if self.partially_unblinded or self.fully_unblinded:
+#             cmd += "--unblinded True "
+#         if not self.partially_unblinded:
+#             print(base_cmd + cmd, "\n\n")
+#             cmd_dict["pointlimits"] = cmd
+#             cmd_dict["qqhh_pointlimits"] = cmd + "--pois r_qqhh "
+
+#         # datacards per config group
+#         if len(self.config_groups) > 1:
+#             cmd = (
+#                 f"law run PlotUpperLimitsAtPoint --version {identifier} --campaign {campaign} "
+#                 f"--multi-datacards {datacards_per_year}:{datacards} "
+#                 f"--datacard-names {','.join(self.config_groups_str)},combined "
+#                 # f"--UpperLimits-workflow htcondor "
+#                 f"--workers 10 "
+#             )
+#             if self.partially_unblinded or self.fully_unblinded:
+#                 cmd += "--unblinded True "
+
+#             if not self.partially_unblinded:
+#                 print(base_cmd + cmd, "\n\n")
+#                 cmd_dict["LimitsPerCampaign"] = cmd
+
+#         # # creating upper limits for kl=1
+#         # cmd = (
+#         #     f"law run PlotUpperLimitsAtPoint --version {identifier} --campaign {campaign} "
+#         #     f"--multi-datacards {datacards} "
+#         #     f"--datacard-names {identifier}"
+#         # )
+#         # if not self.partially_unblinded:
+#         #     print(base_cmd + cmd, "\n\n")
+
+#         # creating kl scan
+#         scan_kl = "kl,-20,25,46"
+#         # scan_kl = "kl,-15,20,36"
+#         # scan_c2v = "C2V,-4,6,41"
+#         scan_c2v = "C2V,-2,4,25"
+#         scan_kt = "kt,-3,3,31"
+#         scan_r = "r,-30,30,61"
+
+#         cmd = (
+#             f"law run PlotUpperLimits --version {identifier} --campaign {campaign} --datacards {datacards} "
+#             f"--xsec fb --y-log --scan-parameters {scan_kl} --UpperLimits-workflow htcondor "
+#             f"--frozen-parameters {self.frozen_for_scans} "
+#         )
+#         if self.partially_unblinded or self.fully_unblinded:
+#             cmd += "--unblinded True "
+#         if not self.partially_unblinded:
+#             print(base_cmd + cmd, "\n\n")
+#             cmd_dict["limits_kl"] = cmd
+#             cmd_dict["qqhh_limits_kl"] = cmd + "--pois r_qqhh "
+#             cmd_dict["limits_c2v"] = cmd.replace(scan_kl, scan_c2v)
+#             cmd_dict["qqhh_limits_c2v"] = cmd.replace(scan_kl, scan_c2v) + "--pois r_qqhh "
+
+#         cmd = (
+#             f"law run PlotMultipleUpperLimits --version {identifier} --campaign {campaign} "
+#             f"--multi-datacards {cards_1b}:{cards_2b}:{cards_boosted}:{datacards} "
+#             f"--datacard-names 1b,2b,Boosted,Combined "
+#             f"--xsec fb --y-log --scan-parameters {scan_c2v} --UpperLimits-workflow htcondor "
+#             f"--workers 4 "
+#             f"--frozen-parameters {self.frozen_for_scans} "
+#         )
+#         if self.partially_unblinded or self.fully_unblinded:
+#             cmd += "--unblinded True "
+#         if not self.partially_unblinded:
+#             print(base_cmd + cmd, "\n\n")
+#             cmd_dict["multilimits_c2v"] = cmd
+#             cmd_dict["qqhh_multilimits_c2v"] = cmd + "--pois r_qqhh "
+#             cmd_dict["multilimits_kl"] = cmd.replace(scan_c2v, scan_kl)
+#             cmd_dict["qqhh_multilimits_kl"] = cmd.replace(scan_c2v, scan_kl) + "--pois r_qqhh "
+
+#         # Likelihood scans
+#         cmd = (
+#             f"law run PlotMultipleLikelihoodScans --version {identifier} --campaign {campaign} "
+#             f"--multi-datacards $CARDS:$CARDS --datacard-names Observed,Expected --unblinded True,False "
+#             f"--LikelihoodScan-{{workflow=htcondor,retries=1}} --workers 4 "
+#         )
+#         for poi, scan_params in (
+#             ("kl", scan_kl), ("C2V", scan_c2v), ("r", scan_r),
+#             ("kl_C2V", f"{scan_kl}:{scan_c2v}"),
+#             ("kl_kt", f"{scan_kl}:{scan_kt}"),
+#         ):
+#             cmd_poi = cmd + f" --scan-parameters {scan_params} --poi {poi.replace('_', ',')} "
+#             print(base_cmd + cmd_poi, "\n\n")
+#             cmd_dict[f"likelihood_{poi.lower()}"] = cmd_poi
+
+#         # running FitDiagnostics for Pre+Postfit plots
+#         cmd = (
+#             f"law run FitDiagnostics --version {identifier} --datacards {datacards} "
+#             f"--skip-b-only"
+#         )
+#         cmd_dict["FitDiagnostics"] = cmd
+
+#         # running Pulls and Impacts
+#         # impacts_order = "--order-by-impacts"
+#         impacts_order = ""
+#         cmd = (
+#             f"law run PlotPullsAndImpacts --version {identifier} --campaign {campaign} --datacards {datacards} "
+#             f"--parameters-per-page 80 --mc-stats --retry-no-analytic "
+#             f"{impacts_order} "
+#         )
+#         pulls_and_impacts_params = "workflow=htcondor,retries=1"
+#         custom_args = "--robustFit 1"
+#         if self.partially_unblinded:
+#             custom_args += " --rMin -350 --rMax 350"
+#         else:
+#             custom_args += " --rMin -32 --rMax 32"
+#         if self.partially_unblinded or self.fully_unblinded:
+#             cmd += "--unblinded True --show-best-fit True "
+#         elif self.unblinded_step1:
+#             cmd += "--unblinded True --show-best-fit False "
+#             # cmd += "--unblinded True "  # do this only after all unblinding steps!
+#         retry_pulls_and_impacts_params = pulls_and_impacts_params + f",custom-args='{custom_args} --X-rtd MINIMIZER_no_analytic'"  # noqa: E501
+#         pulls_and_impacts_params += f",custom-args='{custom_args}'"
+
+#         cmd += f"--PullsAndImpacts-{{{pulls_and_impacts_params}}} "
+
+#         print(base_cmd + cmd, "\n\n")
+#         cmd_dict["impacts"] = cmd
+#         cmd_dict["impacts_retry"] = cmd.replace(pulls_and_impacts_params, retry_pulls_and_impacts_params)
+
+#         # MultiplePullsAndImpacts
+#         cmd = (
+#             f"law run PlotMultiplePullsAndImpacts --version {identifier} --campaign {campaign} "
+#             f"--multi-datacards {cards_1b}:{cards_2b}:{cards_boosted}:{datacards} "
+#             f"--datacard-names 1b,2b,Boosted,Combined "
+#             # f"--parameters-per-page 80 --mc-stats "
+#             "--retry-no-analytic "
+#             f"{impacts_order} "
+#             f"--workers 4 "
+#         )
+#         cmd += f"--PullsAndImpacts-{{{pulls_and_impacts_params}}} "
+#         cmd_dict["multiimpacts"] = cmd
+#         cmd_dict["multiimpacts_retry"] = cmd.replace(pulls_and_impacts_params, retry_pulls_and_impacts_params)
+
+#         # running GoodnessOfFit
+#         # freeze_signal = "--freezeParameters r,r_gghh,r_qqhh,kl,kt,CV,C2V --setParameters r=0.0,r_gghh=0.0,r_qqhh=0.0,kl=1.0,kt=1.0,CV=1.0,C2V=1.0"  # noqa: E501
+#         parameter_values = "r=0.0:r_gghh=0.0:r_qqhh=0.0:kl=1.0:kt=1.0:CV=1.0:C2V=1.0"
+#         if self.partially_unblinded or self.unblinded_step1 or self.fully_unblinded:
+#             snapshot_custom_args = custom_args
+#             # if self.partially_unblinded:
+#             #     snapshot_custom_args = " ".join([custom_args, freeze_signal])
+#             cmd = (
+#                 f"law run PlotMultipleGoodnessOfFits --version {identifier} --campaign {campaign} "
+#                 f"--multi-datacards {cards_1b}:{cards_2b}:{cards_boosted}:{datacards} "
+#                 f"--datacard-names 1b,2b,Boosted,Combined "
+#                 f"--toys 1000 --toys-per-branch 20 --frequentist-toys --use-snapshot "
+#             )
+#             cmd += f"--Snapshot-{{unblinded,custom-args='{snapshot_custom_args}'}} "
+#             if self.partially_unblinded:
+#                 gof_custom_args = " --rMin -350 --rMax 350"
+#                 cmd += f"--GoodnessOfFit-{{workflow=htcondor,custom-args='{gof_custom_args}'}} "
+#                 cmd += f"--parameter-values {parameter_values} "
+#             else:
+#                 cmd += "--GoodnessOfFit-workflow htcondor "
+#             cmd += "--workers 4 "
+
+#             cmd_dict["gof"] = cmd
+
+#         # running PreAndPostfitShapes for Pre+Postfit plots
+#         cmd = (
+#             f"law run MergePreAndPostFitShapes --version {identifier} "
+#             f"--datacards {datacards} "
+#             f"--apply-fit-datacards {datacards.replace(',', ':')} "
+#             "--PreAndPostFitShapes-workflow htcondor --workers 5 "
+#         )
+#         if self.partially_unblinded or self.unblinded_step1 and not self.fully_unblinded:
+#             # cmd += f"--FitParameters-custom-args='{freeze_signal}' "
+#             cmd += f"--parameter-values {parameter_values} "
+#         if self.partially_unblinded or self.unblinded_step1 or self.fully_unblinded:
+#             cmd += "--unblinded True "
+#         print(base_cmd + cmd, "\n\n")
+#         cmd_dict["postfitshapes"] = cmd
+#         cmd += "--prefit"
+#         cmd_dict["prefitshapes"] = cmd
+
+#         if self.rerun:
+#             for key, cmd in cmd_dict.items():
+#                 if key in ("prepare_cards", "export"):
+#                     continue
+#                 cmd_dict[key] = cmd + " --remove-output 0,a,y"
+
+#         # dump all the commands to one output file
+#         functions_cmd = "\n\n".join([
+#             f"{key}() {{\n    {cmd_dict[key]}\n}}" for key in cmd_dict.keys() if key != "export"
+#         ])
+#         if missing_keys := (set(self.requested_keys) - set(cmd_dict.keys())):
+#             logger.warning(f"Requested keys {missing_keys} are not available in the command dictionary.")
+#             self.requested_keys = [key for key in self.requested_keys if key not in missing_keys]
+#         run_script = self.create_run_script(
+#             identifier=identifier,
+#             export_cmd=cmd_dict["export"],
+#             functions_cmd=functions_cmd,
+#         )
+#         output["Run"].dump(run_script, formatter="text")
+
+#         print("# combined task calls")
+#         print(f"bash {output['Run'].abspath}")
+
+#     def create_run_script(self, identifier, export_cmd, functions_cmd):
+#         # TODO: I would like to rewrite the script such that each command of the cmd_dict is in one function
+#         def fetch_func(cmd, multi_thread: bool = False):
+#             cmd = cmd.replace("law run", f"run_and_fetch_cmd {identifier} law run")
+#             if multi_thread:
+#                 cmd = cmd.replace("\n", " & \n") + " & wait"
+#             return cmd
+#         newline_with_indent = "\n    "
+
+#         run_script = f"""#!/bin/bash
+# # AUTO-GENERATED FILE! DO NOT EDIT!
+
+# dry_run=${{dry_run:-false}}
+# retry_impacts=${{retry_impacts:-false}}
+
+# {export_cmd}
+
+# mkdir -p $DHI_DATA/fetched_plots/{identifier} && cd $DHI_DATA/fetched_plots/{identifier}
+
+# run_and_fetch_cmd() {{
+#     local folder="$1"
+#     cd "$DHI_DATA/fetched_plots/$folder" || exit 1
+#     if [[ "$dry_run" != "false" ]]; then
+#         echo "[DRY-RUN] ${{*:2}}"
+#         echo "[DRY-RUN] ${{*:2}} --fetch-output 0,a"
+#     else
+#         echo "[RUNNING] ${{*:2}}"
+#         "${{@:2}}"
+#         "${{@:2}}" --fetch-output 0,a
+#     fi
+# }}
+
+# {fetch_func(functions_cmd)}
+
+# run_all() {{
+#     {newline_with_indent.join([key for key in self.requested_keys])}
+# }}
+
+# # Only run if script is executed, not sourced
+# if [[ "${{BASH_SOURCE[0]}}" == "${{0}}" ]]; then
+#     run_all
+# fi
+# """
+#         return run_script
+
 class PrepareInferenceTaskCalls(
-    HBWInferenceModelBase,
-    InferenceModelClassMixin,
+    HBWTask,
+    CalibratorClassesMixin,
+    SelectorClassMixin,
+    ReducerClassMixin,
+    ProducerClassesMixin,
+    MLModelsMixin,
+    HistProducerClassMixin,
+    InferenceModelMixin,
+    HistHookMixin,
+    # law.LocalWorkflow,
+    # RemoteWorkflow,
 ):
     """
     Simple task that produces string to run certain tasks in Inference
     """
+    resolution_task_cls = MergeHistograms
+    single_config = False
+
+    sandbox = dev_sandbox(law.config.get("analysis", "default_columnar_sandbox"))
+
     # upstream requirements
     reqs = Requirements(
         ModifyDatacardsFlatRebin=ModifyDatacardsFlatRebin,
     )
 
-    # output_collection_cls = law.NestedSiblingFileCollection
-    config_groups = law.MultiCSVParameter(
-        # default=(("c22prev14", "c22postv14"), ("c23prev14", "c23postv14")),
-        default=(("c22prev14", "c22postv14", "c23prev14", "c23postv14"),),
-        description="List of config groups to use for this task.",
-        significant=False,
-    )
-
-    requested_keys = law.CSVParameter(
-        default=[
-            "prepare_cards",
-            # "LimitsPerCategory",
-            # "qqHH_LimitsPerCategory",
-            # "LimitsPerCampaign",
-            "pointlimits",
-            "qqhh_pointlimits",
-            "impacts",
-            # "likelihood_r",
-            "postfitshapes",
-            "prefitshapes",
-            "likelihood_kl",
-            "likelihood_c2v",
-            "likelihood_kl_c2v",
-            # "likelihood_kl_kt",
-            "limits_kl",
-            "limits_c2v",
-            "gof",
-            # "multilimits_c2v",
-            # "multilimits_kl",
-            # "qqhh_multilimits_c2v",
-            # "qqhh_multilimits_kl",
-        ],
-        description="List of inference task keys to prepare calls for.",
-        significant=False,
-    )
-    rerun = luigi.BoolParameter(
-        default=False,
-        description="Whether to rerun the tasks even if their output exists.",
-        significant=False,
-    )
-    # systematics that are frozen for kl and c2v scans
-    frozen_for_scans = ",".join([
-        "THU_HH", "pdf_Higgs_hh_vbf", "pdf_Higgs_hh_ggf", "QCDscale_hh_vbf",
-        "BR_hbb", "BR_hww", "BR_hzz", "BR_htt", "BR_hgg",
-    ])
-
-    cards_version = luigi.Parameter(
-        default="",
-        description="Optional version string to append to the datacard output path.",
-        significant=True,
-    )
-
-    # # TODO: add param to not delete existing cards each time :)
-    recreate_datacards = luigi.BoolParameter(
-        default=False,
-        description="Whether to recreate only the Run.sh script.",
-        significant=False,
-    )
-    run_script_name = luigi.Parameter(
-        default="Run.sh",
-        description="Name of the run script to create.",
-        significant=True,
-    )
-
-    @classmethod
-    def resolve_instances(cls, params: dict[str, Any], shifts: TaskShifts) -> dict[str, Any]:
-        # params["known_shifts"] = shifts
-
-        # TODO: freeze stuff inst dict
-
-        for config_group in params["config_groups"]:
-            _params = params.copy()
-            _params["configs"] = config_group
-            _params["config_insts"] = [
-                config_inst for config_inst in params["config_insts"]
-                if config_inst.name in config_group
-            ]
-            _params["inst_dict"] = {
-                "configs": _params["configs"],
-                "config_insts": _params["config_insts"],
-            }
-            cls.reqs.ModifyDatacardsFlatRebin.resolve_instances(_params, shifts)
-
-        return params
-
-    @classmethod
-    def modify_param_values(cls, params: dict[str, Any]) -> dict[str, Any]:
-        if params["config_groups"]:
-            configs = tuple(config for config_group in params["config_groups"] for config in config_group)
-            if configs != params["configs"]:
-                logger.warning_once(
-                    f"update_configs_{params['configs']}_from_groups_{params['config_groups']}",
-                    f"Overwriting 'configs' parameter with values {configs} because "
-                    f"'config_groups' parameter with values {params['config_groups']} will be used.",
-                )
-                params["configs"] = configs
-        return super().modify_param_values(params)
-
     def workflow_requires(self):
         reqs = super().workflow_requires()
-        for config_group in self.config_groups:
-            config_repr = self.configs_str(config_group)
-            reqs[f"rebinned_datacards__{config_repr}"] = self.reqs.ModifyDatacardsFlatRebin.req(
-                self,
-                configs=config_group,
-                # config_insts=[config_inst for config_inst in self.config_insts if config_inst.name in config_group],
-            )
+
+        reqs["rebinned_datacards"] = self.reqs.ModifyDatacardsFlatRebin.req(self)
 
         return reqs
 
     def requires(self):
-        reqs = {}
-        for config_group in self.config_groups:
-            config_repr = self.configs_str(config_group)
-            reqs[f"rebinned_datacards__{config_repr}"] = self.reqs.ModifyDatacardsFlatRebin.req(
-                self,
-                configs=config_group,
-                # config_insts=[config_inst for config_inst in self.config_insts if config_inst.name in config_group],
-            )
+        reqs = {
+            "rebinned_datacards": self.reqs.ModifyDatacardsFlatRebin.req(self),
+        }
         return reqs
 
-    @property
-    def config_groups_str(self):
-        return [self.configs_str(configs) for configs in self.config_groups]
-
-    def store_parts(self):
-        parts = super().store_parts()
-        cards_repr = "__".join(self.config_groups_str)
-        if self.cards_version:
-            cards_repr += f"__{self.cards_version}"
-        parts.insert_before("version", "config_group", cards_repr)
-        return parts
-
     def output(self):
-        # TODO: should add configs_str to output path
-        output = {
-            "Run": self.target(self.run_script_name),
+        return {
+            "Run": self.target("Run.sh"),
+            "PlotUpperLimitsAtPoint": self.target("PlotUpperLimitsAtPoint.txt"),
+            "PlotUpperLimits_kl": self.target("PlotUpperLimits_kl.txt"),
+            "PlotUpperLimits_k4": self.target("PlotUpperLimits_k4.txt"),
+            "PlotUpperLimits_c2v": self.target("PlotUpperLimits_c2v.txt"),
+            "FitDiagnostics": self.target("FitDiagnostics.txt"),
+            "PullsAndImpacts": self.target("PullsAndImpacts.txt"),
         }
-        self.cards_target = self.target("datacards", dir=True)
-        if self.recreate_datacards:
-            output["datacards"] = self.cards_target
-        return output
 
     def run(self):
         inputs = self.input()
         output = self.output()
 
-        card_fns = []
-        for key, value in inputs.items():
-            recreate_cards = self.recreate_datacards or not self.cards_target.exists()
-            if not key.startswith("rebinned_datacards__"):
-                continue
-            for target in value.collection.targets.values():
-                card_fns.append(target["card"].basename)
-                if recreate_cards:
-                    logger.info(f"Copying datacard for target {target['card'].basename} to {self.cards_target.abspath}")
-                    target["card"].copy_to(self.cards_target)
-                    target["shapes"].copy_to(self.cards_target)
-                    target["inspection"].copy_to(self.cards_target)
-
         # string that represents the version of datacards
-        identifier_list = [*self.config_groups_str, self.inference_model_cls.__str__()]
-        if self.cards_version:
-            identifier_list.append(self.cards_version)
-        identifier = "__".join(identifier_list)
+        identifier = "__".join([*self.configs, self.selector, self.inference_model, self.version])
 
-        # TODO: copy datacards to this output
-
-        # TODO: merge collections from different config groups
-        # TODO: get rid of inference_model_inst usage
         # get the datacard names from the inputs
-        # collection = inputs["rebinned_datacards"]["collection"]
-        # cards_path = {collection[key]["card"].dirname for key in collection.keys()}
-        # if len(cards_path) != 1:
-        #     raise Exception("Expected only one datacard path")
-        # cards_path = cards_path.pop()
+        collection = inputs["rebinned_datacards"]["collection"]
+        cards_path = {collection[key]["card"].dirname for key in collection.keys()}
+        if len(cards_path) != 1:
+            raise Exception("Expected only one datacard path")
+        cards_path = cards_path.pop()
 
-        cards_path = self.cards_target.abspath
-        decorrelated_cards_path = f"{cards_path}/decorrelated"
-
-        # card_fns = [collection[key]["card"].basename for key in collection.keys()]
+        card_fns = [collection[key]["card"].basename for key in collection.keys()]
 
         # get the category names from the inference models
-        cat_names = self.inference_model_cls.config_categories
-        cat_names = [f"{cat_name}__{year}" for year in self.config_groups_str for cat_name in cat_names]
+        categories = self.inference_model_inst.categories
+        cat_names = [c.name for c in categories]
+        b_groups = ["2b", "3b", "4b"]
+        subgroups = []
+        for group in b_groups:
+            # Filter for categories matching the specific b-tag multiplicity
+            items = [
+                f"{name}=$CARDS_PATH/{fn}" 
+                for name, fn in zip(cat_names, card_fns) 
+                if f"__{group}__" in name
+            ]
+            if items:
+                subgroups.append(",".join(items))
+
+        # 2. Generate the "all" group (everything together)
+        all_items = [f"{name}=$CARDS_PATH/{fn}" for name, fn in zip(cat_names, card_fns)]
+        subgroups.append(",".join(all_items))
+
+        # 3. Join the groups with ":"
+        datacards_mg = ":".join(subgroups)
+
+        # 4. Create corresponding names for the segments (used for the legend/output)
+        # Result: "2b,3b,4b,4b_2l,combined"
+        group_labels = b_groups + ["combined"]
+        datacard_names = ",".join(group_labels)
 
         # combine category names with card fn to a single string
         datacards = ",".join([f"{cat_name}=$CARDS_PATH/{card_fn}" for cat_name, card_fn in zip(cat_names, card_fns)])
-        datacards_per_year = ":".join([",".join(
-            [card for card in datacards.split(",") if year in card],
-        ) for year in self.config_groups_str])
 
         # # name of the output root file that contains the Pre+Postfit shapes
         # output_file = ""
 
-        # prepare the base command to set the environment variables
-        base_cmd = f"export BASE_CARDS_PATH={cards_path}" + "\n" + f"export CARDS_PATH={decorrelated_cards_path}" + "\n"
-        export_and_prepare_cards_cmd = base_cmd
-        cmd_dict = {}
+        base_cmd = f"export CARDS_PATH={cards_path}" + "\n"
+        full_cmd = base_cmd
 
-        # prepare strings for campaign name and card names
-        if len(self.configs) == 4:
-            campaign = "run3"
-        elif len(self.configs) == 1:
-            campaign = self.configs[0]
-        else:
-            lumi = sum([config_inst.x.luminosity.get("nominal") for config_inst in self.config_insts]) * 0.001
-            campaign = f"'{lumi:.1f} fb^{{-1}}'"
+        lumi = sum([config_inst.x.luminosity.get("nominal") for config_inst in self.config_insts]) * 0.001
+        lumi = f"'{lumi:.1f} fb^{{-1}}'"
 
-        is_signal_region = lambda cat_name: (
-            "sig_" in cat_name or cat_name == "sr__boosted" or "hh_ggf_" in cat_name or "hh_vbf_" in cat_name
-        )
-
-        # creating limits per signal region vs all 1b regions vs all 2b regions vs all regions combined
-        multi_sig_cards = ":".join([
-            f"{cat_name}=$CARDS_PATH/{card_fn}"
-            for cat_name, card_fn in zip(cat_names, card_fns) if is_signal_region(cat_name)
-        ])
-        multi_sig_card_names = ",".join([
-            cat_name for cat_name in cat_names if is_signal_region(cat_name)
-        ])
-        # cards_vbf = ",".join([
-        #     f"{cat_name}=$CARDS_PATH/{card_fn}" for cat_name, card_fn in zip(cat_names, card_fns) if "ggf" not in cat_name  # noqa: E501
-        # ])
-        # cards_ggf = ",".join([
-        #     f"{cat_name}=$CARDS_PATH/{card_fn}" for cat_name, card_fn in zip(cat_names, card_fns) if "vbf" not in cat_name  # noqa: E501
-        # ])
-        cards_1b = ",".join([
-            f"{cat_name}=$CARDS_PATH/{card_fn}" for cat_name, card_fn in zip(cat_names, card_fns) if "1b" in cat_name
-        ])
-        cards_2b = ",".join([
-            f"{cat_name}=$CARDS_PATH/{card_fn}" for cat_name, card_fn in zip(cat_names, card_fns) if "2b" in cat_name
-        ])
-        cards_boosted = ",".join([
-            f"{cat_name}=$CARDS_PATH/{card_fn}"
-            for cat_name, card_fn in zip(cat_names, card_fns) if "boosted" in cat_name
-        ])
-
-        # NOTE: we could replace e.g. {datacards} with $CARDS in the commands below
-        cards_dict = {
-            "CARDS": datacards,
-            "CARDSB": cards_1b,
-            "CARDSBB": cards_2b,
-            "CARDSBoost": cards_boosted,
-        }
-        export_cards_combinations = "\n".join(f"export {key}={value}" for key, value in cards_dict.items())
-        cmd_dict["export"] = "\n".join([base_cmd, export_cards_combinations])
-
-        multi_datacards = []
-        multi_datacard_names = []
-        for cards, this_identifier in [
-            (multi_sig_cards, multi_sig_card_names),
-            (cards_1b, "1b_combined"),
-            (cards_2b, "2b_combined"),
-            (cards_boosted, "boosted_combined"),
-            (datacards, identifier),
-        ]:
-            if cards:
-                multi_datacards.append(cards)
-                multi_datacard_names.append(this_identifier)
-
-        multi_datacards = ":".join(multi_datacards)
-        multi_datacard_names = ",".join(multi_datacard_names)
-
-        # run pruning helper on cards
-        prepare_cards = []
-        for card_fn in card_fns:
-            cmd = f"prepare_cards.py $BASE_CARDS_PATH/{card_fn}"
-            export_and_prepare_cards_cmd += cmd + "\n"
-            prepare_cards.append(cmd)
-        # cmd_dict["prepare_cards"] = "\n".joiyn(prepare_cards)
-        # prepare first card to avoid runtime issues of folder creation
-        cmd_dict["prepare_cards"] = prepare_cards[0] + "\n" + " & ".join(prepare_cards)
-        cmd_dict["prepare_cards"] += " & wait"
         print("\n\n")
-        print(export_and_prepare_cards_cmd)
-
-        base_cmd = f"export CARDS_PATH={decorrelated_cards_path}" + "\n"
-
-        # print(base_cmd)
-        # for card, _ident in zip(card_fns, identifier):
-        #     cmd = f"ValidateDatacard.py $CARDS_PATH/{card} --jsonFile $CARDS_PATH//validation_{_ident}.json"
-        #     print(cmd)
-        # print("\n\n")
-
-        # fetch card combination
-        cmd = (
-            f"law run CombineDatacards --version {identifier} --datacards {datacards} "
-        )
-        cmd_dict["combine_cards"] = cmd
-
         # creating upper limits for kl=1
         cmd = (
-            f"law run PlotUpperLimitsAtPoint --version {identifier} --campaign {campaign} "
-            f"--multi-datacards {multi_datacards} "
-            f"--datacard-names {multi_datacard_names} "
-            # f"--UpperLimits-workflow htcondor "
-            f"--workers 10 "
+            f"law run PlotUpperLimitsAtPoint --version {identifier} --campaign {lumi} --multi-datacards {datacards_mg} "
+            f"--datacard-names {datacard_names} --hh-model dhi.models.hh_model_basisV3.model_hhh_ggf --workers 10"
         )
-        if self.partially_unblinded or self.fully_unblinded:
-            cmd += "--unblinded True "
-        if not self.partially_unblinded:
-            print(base_cmd + cmd, "\n\n")
-            cmd_dict["LimitsPerCategory"] = cmd
-            cmd_dict["qqHH_LimitsPerCategory"] = cmd + "--pois r_qqhh "
-
-        # creating upper limits for kl=1 with clean signal regions only
-        cmd = (
-            f"law run PlotUpperLimitsAtPoint --version {identifier} --campaign {campaign} "
-            f"--multi-datacards {cards_1b}:{cards_2b}:{cards_boosted}:{datacards} "
-            f"--datacard-names 1b,2b,Boosted,Combined "
-            # f"--UpperLimits-workflow htcondor "
-            f"--workers 10 "
-        )
-        if self.partially_unblinded or self.fully_unblinded:
-            cmd += "--unblinded True "
-        if not self.partially_unblinded:
-            print(base_cmd + cmd, "\n\n")
-            cmd_dict["pointlimits"] = cmd
-            cmd_dict["qqhh_pointlimits"] = cmd + "--pois r_qqhh "
-
-        # datacards per config group
-        if len(self.config_groups) > 1:
-            cmd = (
-                f"law run PlotUpperLimitsAtPoint --version {identifier} --campaign {campaign} "
-                f"--multi-datacards {datacards_per_year}:{datacards} "
-                f"--datacard-names {','.join(self.config_groups_str)},combined "
-                # f"--UpperLimits-workflow htcondor "
-                f"--workers 10 "
-            )
-            if self.partially_unblinded or self.fully_unblinded:
-                cmd += "--unblinded True "
-
-            if not self.partially_unblinded:
-                print(base_cmd + cmd, "\n\n")
-                cmd_dict["LimitsPerCampaign"] = cmd
-
-        # # creating upper limits for kl=1
-        # cmd = (
-        #     f"law run PlotUpperLimitsAtPoint --version {identifier} --campaign {campaign} "
-        #     f"--multi-datacards {datacards} "
-        #     f"--datacard-names {identifier}"
-        # )
-        # if not self.partially_unblinded:
-        #     print(base_cmd + cmd, "\n\n")
+        print(base_cmd + cmd, "\n\n")
+        full_cmd += cmd + "\n\n"
+        output["PlotUpperLimitsAtPoint"].dump(cmd, formatter="text")
 
         # creating kl scan
-        scan_kl = "kl,-20,25,46"
-        # scan_kl = "kl,-15,20,36"
-        # scan_c2v = "C2V,-4,6,41"
-        scan_c2v = "C2V,-2,4,25"
-        scan_kt = "kt,-3,3,31"
-        scan_r = "r,-30,30,61"
-
         cmd = (
-            f"law run PlotUpperLimits --version {identifier} --campaign {campaign} --datacards {datacards} "
-            f"--xsec fb --y-log --scan-parameters {scan_kl} --UpperLimits-workflow htcondor "
-            f"--frozen-parameters {self.frozen_for_scans} "
+            f"law run PlotUpperLimits --version {identifier} --campaign {lumi} --datacards {datacards} "
+            f"--xsec fb --y-log --hh-model dhi.models.hh_model_basisV3.model_hhh_ggf@noBRscaling --scan-parameters kl,-20,20,20 "
+            f"--show-theory False --workers 10"
         )
-        if self.partially_unblinded or self.fully_unblinded:
-            cmd += "--unblinded True "
-        if not self.partially_unblinded:
-            print(base_cmd + cmd, "\n\n")
-            cmd_dict["limits_kl"] = cmd
-            cmd_dict["qqhh_limits_kl"] = cmd + "--pois r_qqhh "
-            cmd_dict["limits_c2v"] = cmd.replace(scan_kl, scan_c2v)
-            cmd_dict["qqhh_limits_c2v"] = cmd.replace(scan_kl, scan_c2v) + "--pois r_qqhh "
+        print(base_cmd + cmd, "\n\n")
+        full_cmd += cmd + "\n\n"
+        output["PlotUpperLimits_kl"].dump(cmd, formatter="text")
 
+        # creating kl scan
         cmd = (
-            f"law run PlotMultipleUpperLimits --version {identifier} --campaign {campaign} "
-            f"--multi-datacards {cards_1b}:{cards_2b}:{cards_boosted}:{datacards} "
-            f"--datacard-names 1b,2b,Boosted,Combined "
-            f"--xsec fb --y-log --scan-parameters {scan_c2v} --UpperLimits-workflow htcondor "
-            f"--workers 4 "
-            f"--frozen-parameters {self.frozen_for_scans} "
+            f"law run PlotUpperLimits --version {identifier} --campaign {lumi} --datacards {datacards} "
+            f"--xsec fb --y-log --hh-model dhi.models.hh_model_basisV3.model_hhh_ggf@noBRscaling --scan-parameters k4,-200,200,200 "
+            f"--show-theory False --workers 10"
         )
-        if self.partially_unblinded or self.fully_unblinded:
-            cmd += "--unblinded True "
-        if not self.partially_unblinded:
-            print(base_cmd + cmd, "\n\n")
-            cmd_dict["multilimits_c2v"] = cmd
-            cmd_dict["qqhh_multilimits_c2v"] = cmd + "--pois r_qqhh "
-            cmd_dict["multilimits_kl"] = cmd.replace(scan_c2v, scan_kl)
-            cmd_dict["qqhh_multilimits_kl"] = cmd.replace(scan_c2v, scan_kl) + "--pois r_qqhh "
+        print(base_cmd + cmd, "\n\n")
+        full_cmd += cmd + "\n\n"
+        output["PlotUpperLimits_k4"].dump(cmd, formatter="text")
 
-        # Likelihood scans
+        # creating C2V scan
         cmd = (
-            f"law run PlotMultipleLikelihoodScans --version {identifier} --campaign {campaign} "
-            f"--multi-datacards $CARDS:$CARDS --datacard-names Observed,Expected --unblinded True,False "
-            f"--LikelihoodScan-{{workflow=htcondor,retries=1}} --workers 4 "
+            f"law run PlotUpperLimits --version {identifier} --campaign {lumi} --datacards {datacards} "
+            f"--xsec fb --y-log --scan-parameters C2V,-4,6,11"
         )
-        for poi, scan_params in (
-            ("kl", scan_kl), ("C2V", scan_c2v), ("r", scan_r),
-            ("kl_C2V", f"{scan_kl}:{scan_c2v}"),
-            ("kl_kt", f"{scan_kl}:{scan_kt}"),
-        ):
-            cmd_poi = cmd + f" --scan-parameters {scan_params} --poi {poi.replace('_', ',')} "
-            print(base_cmd + cmd_poi, "\n\n")
-            cmd_dict[f"likelihood_{poi.lower()}"] = cmd_poi
+        print(base_cmd + cmd, "\n\n")
+        full_cmd += cmd + "\n\n"
+        output["PlotUpperLimits_c2v"].dump(cmd, formatter="text")
 
         # running FitDiagnostics for Pre+Postfit plots
         cmd = (
             f"law run FitDiagnostics --version {identifier} --datacards {datacards} "
             f"--skip-b-only"
         )
-        cmd_dict["FitDiagnostics"] = cmd
-
-        # running Pulls and Impacts
-        # impacts_order = "--order-by-impacts"
-        impacts_order = ""
-        cmd = (
-            f"law run PlotPullsAndImpacts --version {identifier} --campaign {campaign} --datacards {datacards} "
-            f"--parameters-per-page 80 --mc-stats --retry-no-analytic "
-            f"{impacts_order} "
-        )
-        pulls_and_impacts_params = "workflow=htcondor,retries=1"
-        custom_args = "--robustFit 1"
-        if self.partially_unblinded:
-            custom_args += " --rMin -350 --rMax 350"
-        else:
-            custom_args += " --rMin -32 --rMax 32"
-        if self.partially_unblinded or self.fully_unblinded:
-            cmd += "--unblinded True --show-best-fit True "
-        elif self.unblinded_step1:
-            cmd += "--unblinded True --show-best-fit False "
-            # cmd += "--unblinded True "  # do this only after all unblinding steps!
-        retry_pulls_and_impacts_params = pulls_and_impacts_params + f",custom-args='{custom_args} --X-rtd MINIMIZER_no_analytic'"  # noqa: E501
-        pulls_and_impacts_params += f",custom-args='{custom_args}'"
-
-        cmd += f"--PullsAndImpacts-{{{pulls_and_impacts_params}}} "
-
         print(base_cmd + cmd, "\n\n")
-        cmd_dict["impacts"] = cmd
-        cmd_dict["impacts_retry"] = cmd.replace(pulls_and_impacts_params, retry_pulls_and_impacts_params)
+        full_cmd += cmd + "\n\n"
+        output["FitDiagnostics"].dump(cmd, formatter="text")
 
-        # MultiplePullsAndImpacts
+        # running FitDiagnostics for Pre+Postfit plots
         cmd = (
-            f"law run PlotMultiplePullsAndImpacts --version {identifier} --campaign {campaign} "
-            f"--multi-datacards {cards_1b}:{cards_2b}:{cards_boosted}:{datacards} "
-            f"--datacard-names 1b,2b,Boosted,Combined "
-            # f"--parameters-per-page 80 --mc-stats "
-            "--retry-no-analytic "
-            f"{impacts_order} "
-            f"--workers 4 "
+            f"law run PlotPullsAndImpacts --version {identifier} --campaign {lumi} --datacards {datacards} "
+            f"--order-by-impact"
         )
-        cmd += f"--PullsAndImpacts-{{{pulls_and_impacts_params}}} "
-        cmd_dict["multiimpacts"] = cmd
-        cmd_dict["multiimpacts_retry"] = cmd.replace(pulls_and_impacts_params, retry_pulls_and_impacts_params)
-
-        # running GoodnessOfFit
-        # freeze_signal = "--freezeParameters r,r_gghh,r_qqhh,kl,kt,CV,C2V --setParameters r=0.0,r_gghh=0.0,r_qqhh=0.0,kl=1.0,kt=1.0,CV=1.0,C2V=1.0"  # noqa: E501
-        parameter_values = "r=0.0:r_gghh=0.0:r_qqhh=0.0:kl=1.0:kt=1.0:CV=1.0:C2V=1.0"
-        if self.partially_unblinded or self.unblinded_step1 or self.fully_unblinded:
-            snapshot_custom_args = custom_args
-            # if self.partially_unblinded:
-            #     snapshot_custom_args = " ".join([custom_args, freeze_signal])
-            cmd = (
-                f"law run PlotMultipleGoodnessOfFits --version {identifier} --campaign {campaign} "
-                f"--multi-datacards {cards_1b}:{cards_2b}:{cards_boosted}:{datacards} "
-                f"--datacard-names 1b,2b,Boosted,Combined "
-                f"--toys 1000 --toys-per-branch 20 --frequentist-toys --use-snapshot "
-            )
-            cmd += f"--Snapshot-{{unblinded,custom-args='{snapshot_custom_args}'}} "
-            if self.partially_unblinded:
-                gof_custom_args = " --rMin -350 --rMax 350"
-                cmd += f"--GoodnessOfFit-{{workflow=htcondor,custom-args='{gof_custom_args}'}} "
-                cmd += f"--parameter-values {parameter_values} "
-            else:
-                cmd += "--GoodnessOfFit-workflow htcondor "
-            cmd += "--workers 4 "
-
-            cmd_dict["gof"] = cmd
+        print(base_cmd + cmd, "\n\n")
+        full_cmd += cmd + "\n\n"
+        output["PullsAndImpacts"].dump(cmd, formatter="text")
 
         # running PreAndPostfitShapes for Pre+Postfit plots
         cmd = (
-            f"law run MergePreAndPostFitShapes --version {identifier} "
-            f"--datacards {datacards} "
-            f"--apply-fit-datacards {datacards.replace(',', ':')} "
-            "--PreAndPostFitShapes-workflow htcondor --workers 5 "
+            f"law run PreAndPostFitShapes --version {identifier} --datacards {datacards} "
+            # f"--output-name {output_file}"
         )
-        if self.partially_unblinded or self.unblinded_step1 and not self.fully_unblinded:
-            # cmd += f"--FitParameters-custom-args='{freeze_signal}' "
-            cmd += f"--parameter-values {parameter_values} "
-        if self.partially_unblinded or self.unblinded_step1 or self.fully_unblinded:
-            cmd += "--unblinded True "
         print(base_cmd + cmd, "\n\n")
-        cmd_dict["postfitshapes"] = cmd
-        cmd += "--prefit"
-        cmd_dict["prefitshapes"] = cmd
+        output["FitDiagnostics"].dump(cmd, formatter="text")
 
-        if self.rerun:
-            for key, cmd in cmd_dict.items():
-                if key in ("prepare_cards", "export"):
-                    continue
-                cmd_dict[key] = cmd + " --remove-output 0,a,y"
-
-        # dump all the commands to one output file
-        functions_cmd = "\n\n".join([
-            f"{key}() {{\n    {cmd_dict[key]}\n}}" for key in cmd_dict.keys() if key != "export"
-        ])
-        if missing_keys := (set(self.requested_keys) - set(cmd_dict.keys())):
-            logger.warning(f"Requested keys {missing_keys} are not available in the command dictionary.")
-            self.requested_keys = [key for key in self.requested_keys if key not in missing_keys]
-        run_script = self.create_run_script(
-            identifier=identifier,
-            export_cmd=cmd_dict["export"],
-            functions_cmd=functions_cmd,
-        )
-        output["Run"].dump(run_script, formatter="text")
-
-        print("# combined task calls")
-        print(f"bash {output['Run'].abspath}")
-
-    def create_run_script(self, identifier, export_cmd, functions_cmd):
-        # TODO: I would like to rewrite the script such that each command of the cmd_dict is in one function
-        def fetch_func(cmd, multi_thread: bool = False):
-            cmd = cmd.replace("law run", f"run_and_fetch_cmd {identifier} law run")
-            if multi_thread:
-                cmd = cmd.replace("\n", " & \n") + " & wait"
-            return cmd
-        newline_with_indent = "\n    "
-
-        run_script = f"""#!/bin/bash
-# AUTO-GENERATED FILE! DO NOT EDIT!
-
-dry_run=${{dry_run:-false}}
-retry_impacts=${{retry_impacts:-false}}
-
-{export_cmd}
-
-mkdir -p $DHI_DATA/fetched_plots/{identifier} && cd $DHI_DATA/fetched_plots/{identifier}
-
-run_and_fetch_cmd() {{
-    local folder="$1"
-    cd "$DHI_DATA/fetched_plots/$folder" || exit 1
-    if [[ "$dry_run" != "false" ]]; then
-        echo "[DRY-RUN] ${{*:2}}"
-        echo "[DRY-RUN] ${{*:2}} --fetch-output 0,a"
-    else
-        echo "[RUNNING] ${{*:2}}"
-        "${{@:2}}"
-        "${{@:2}}" --fetch-output 0,a
-    fi
-}}
-
-{fetch_func(functions_cmd)}
-
-run_all() {{
-    {newline_with_indent.join([key for key in self.requested_keys])}
-}}
-
-# Only run if script is executed, not sourced
-if [[ "${{BASH_SOURCE[0]}}" == "${{0}}" ]]; then
-    run_all
-fi
-"""
-        return run_script
-
+        # dump the full command to one output file
+        output["Run"].dump(full_cmd, formatter="text")
 
 class MultiDatacards(
     HBWTask,

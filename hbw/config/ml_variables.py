@@ -147,7 +147,8 @@ def add_common_ml_variables(config: od.Config) -> None:
         name="mli_mbb_dr_sum",
         expression="mli_mbb_dr_sum",
         binning=(40, 0, 200),
-        x_title=r"$m_{h_{\Delta R(b_1,b_2)}} [Smallest]$",
+        unit="GeV",
+        x_title=r"$m_{h_{\Delta R(b_1,b_2)}}$",
     )
     config.add_variable(
         name="mli_mbb_dr_sum_2",
@@ -165,6 +166,7 @@ def add_common_ml_variables(config: od.Config) -> None:
         name="mli_mbb_dr_all_sum",
         expression="mli_mbb_dr_all_sum",
         binning=(40, 0, 200),
+        unit="GeV",
         x_title=r"$m_{h_{\Delta R(j,j)}}$",
     )
     config.add_variable(
@@ -283,6 +285,48 @@ def add_common_ml_variables(config: od.Config) -> None:
         unit="GeV",
         x_title=r"$2 \times m_{b}^{top}+m_{l}^{top}$",
     )
+    for obj in ["B1", "B2", "B3", "L0", "L1", "MET"]:
+        config.add_variable(
+            name=f"mli_dr_B0_{obj}",
+            expression=f"mli_dr_B0_{obj}",
+            binning=(10, 0, 10),
+            x_title=f"mli_dr_B0_{obj}",
+        )
+    for obj in ["B1", "B2", "B3", "L0", "L1", "MET"]:
+        config.add_variable(
+            name=f"mli_dp_B0_{obj}",
+            expression=f"mli_dp_B0_{obj}",
+            binning=(10, -5, 5),
+            x_title=f"mli_dp_B0_{obj}",
+        )
+    config.add_variable(
+        name="mli_bb_dr_min",
+        expression="mli_bb_dr_min",
+        binning=(40, 0, 6),
+        x_title=r"min $\Delta R(b,b)$",
+        aux={"overflow": True},
+    )
+    config.add_variable(
+        name="mli_bb_dr_other",
+        expression="mli_bb_dr_other",
+        binning=(40, 0, 6),
+        x_title=r"min $\Delta R(b,b)$ other",
+        aux={"overflow": True},
+    )
+    config.add_variable(
+        name="mli_jj_dr_min",
+        expression="mli_jj_dr_min",
+        binning=(40, 0, 6),
+        x_title=r"min $\Delta R(j,j)$",
+        aux={"overflow": True},
+    )
+    config.add_variable(
+        name="mli_dr_llbb",
+        expression="mli_dr_llbb",
+        binning=(40, 0, 6),
+        x_title=r"min $\Delta R$ Raito",
+        aux={"overflow": True},
+    )
     for postfix, object_label in (
         ("", "central jets"),
         ("_alljets", "central + forward jets"),
@@ -366,7 +410,7 @@ def add_common_ml_variables(config: od.Config) -> None:
                 aux={"overflow": True},
             )
 
-    for obj in ["b1", "b2", "b3", "b4", "j1", "j2", "vbfcand1", "vbfcand2", "lep", "met"]:
+    for obj in ["b1", "b2", "b3", "b4", "j1", "j2", "lep", "met"]:
         for var in ["pt", "eta", "phi"]:
             if var == "eta" and obj == "met":
                 continue

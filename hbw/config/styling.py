@@ -38,6 +38,7 @@ cms_color_palette_2 = {
     "darkgrey": "#717581",  # AuroMetalSaurus                   # dy_m4to10
     "turqoise": "#92dadd",  # Pale Robin Egg Blue               # ttv
     "black": "#000000",                                         # data, hh sm
+    "pink": "#f781bf",
 }
 
 color_palette_1 = {
@@ -84,7 +85,7 @@ default_process_colors = {
     "dy_m10to50": color_palette["brown"],
     "dy_m4to10": color_palette["darkgrey"],
     "ttv": color_palette["turqoise"],
-    "vv": color_palette["blue"],
+    "vv": color_palette["green"],
     "other": color_palette["grey"],
     "hh_ggf_hbb_htt": color_palette["grey"],
     "signal_ggf2": color_palette["black"],
@@ -102,6 +103,10 @@ default_process_colors = {
     "hhh_4b2w2l2nu_c3m1_d40": color_palette["green"],
     "hhh_4b2w2l2nu_c3m1_d4m1": color_palette["darkgrey"],
     "hhh_4b2w2l2nu_c3m1p5_d4m0p5": color_palette["turqoise"],
+    "ttbb_custom": color_palette["grey"],
+    "tt_custom": color_palette["turqoise"],
+    "ttw": color_palette["red"],
+    "tttt": color_palette["pink"],
 }
 
 for decay in ("", "qqlnu", "2l2nu"):
@@ -131,6 +136,8 @@ default_labels = {
     "dy_hf": "DY+HF",
     "dy_lf": "DY+LF",
     "tt": r"$t\bar{t}$",
+    "tt_custom": r"$t\bar{t}$ (custom)",
+    "ttbb_custom": r"$t\bar{t} + \geq 1b$ (custom)",
     "dy_m50toinf": "DY ($M > 50$)",
     "dy_m50toinf_0j": "DY ($M > 50$, 0 jets)",
     "dy_m50toinf_1j": "DY ($M > 50$, 1 jets)",
@@ -210,7 +217,8 @@ short_labels = {
     "dy": r"$Z \rightarrow ll$",
     "qcd_mu": r"$QCD \mu$",
     "qcd_ele": r"$QCD e$",
-    "hhh_4b2w2l2nu_c30_d40": r"$HHH_{ggf}^{0,0} (DL)$",
+    # "hhh_4b2w2l2nu_c30_d40": r"$HHH_{ggf}^{0,0} (DL)$",
+    "hhh_4b2w2l2nu_c30_d40": r"$HHH_{SM}$",
     "hhh_4b2w2l2nu_c30_d499": r"$HHH_{ggf}^{0,99} (DL)$", 
     "hhh_4b2w2l2nu_c30_d4m1": r"$HHH_{ggf}^{0,-1} (DL)$",
     "hhh_4b2w2l2nu_c319_d419": r"$HHH_{ggf}^{19,19} (DL)$", 
@@ -221,6 +229,17 @@ short_labels = {
     "hhh_4b2w2l2nu_c3m1_d40": r"$HHH_{ggf}^{-1,0} (DL)$",
     "hhh_4b2w2l2nu_c3m1_d4m1": r"$HHH_{ggf}^{-1,-1} (DL)$",
     "hhh_4b2w2l2nu_c3m1p5_d4m0p5": r"$HHH_{ggf}^{-1.5,-0.5} (DL)$",
+    "hhh_4b2tau_c30_d40": r"$HHH_{SM} (\tau)$",
+    "hhh_4b2tau_c30_d499": r"$HHH_{ggf}^{0,99} (DL)(\tau)$", 
+    "hhh_4b2tau_c30_d4m1": r"$HHH_{ggf}^{0,-1} (DL)(\tau)$",
+    "hhh_4b2tau_c319_d419": r"$HHH_{ggf}^{19,19} (DL)(\tau)$", 
+    "hhh_4b2tau_c31_d40": r"$HHH_{ggf}^{1,0} (DL)(\tau)$", 
+    "hhh_4b2tau_c31_d42": r"$HHH_{ggf}^{1,2} (DL)(\tau)$",
+    "hhh_4b2tau_c32_d4m1": r"$HHH_{ggf}^{2,-1} (DL)(\tau)$", 
+    "hhh_4b2tau_c34_d49": r"$HHH_{ggf}^{4,9} (DL)(\tau)$", 
+    "hhh_4b2tau_c3m1_d40": r"$HHH_{ggf}^{-1,0} (DL)(\tau)$",
+    "hhh_4b2tau_c3m1_d4m1": r"$HHH_{ggf}^{-1,-1} (DL)(\tau)$",
+    "hhh_4b2tau_c3m1p5_d4m0p5": r"$HHH_{ggf}^{-1.5,-0.5} (DL)(\tau)$",
 }
 
 

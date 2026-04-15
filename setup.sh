@@ -150,6 +150,32 @@ main() {
     # run the actual setup
     if setup_hbw "$@"; then
         cf_color green "HHH -> bbbbWW analysis successfully setup"
+#         cf_color red   "
+
+#                              b
+#                            /
+#                   - - - - H
+#                 /          \
+#                /             b_bar
+#               /
+#              /               b
+#             /              /
+# H - - - - - - - - - - - - H
+#             \              \
+#              \               b_bar
+#               \
+#                \                    l+
+#                 \                  /
+#                   - - - - H ~ ~ W+
+#                            \       \
+#                             \       nu
+#                              \
+#                                - - W - nu_bar
+#                                     \
+#                                      \       
+#                                       l-
+
+# "   
         return "0"
     else
         local code="$?"

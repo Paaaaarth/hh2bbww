@@ -82,8 +82,24 @@ def configure_hbw_processes(config: od.Config):
     config.add_process(config.x.procs.n.v_lep)
     config.add_process(config.x.procs.n.background)
     config.add_process(config.x.procs.n.other)
-    config.add_process(config.x.procs.n.hh_other)
+    # config.add_process(config.x.procs.n.hh_other)
+    config.add_process(config.x.procs.n.tt_custom)
+    config.add_process(config.x.procs.n.ttbb_custom)
     minor = config.add_process(config.x.procs.n.minor)
+
+    dataset_inst = config.get_dataset("tt_dl_powheg")
+    dataset_inst.add_process(config.x.procs.n.tt_custom)
+    dataset_inst = config.get_dataset("tt_sl_powheg")
+    dataset_inst.add_process(config.x.procs.n.tt_custom)
+    dataset_inst = config.get_dataset("tt_fh_powheg")
+    dataset_inst.add_process(config.x.procs.n.tt_custom)
+    dataset_inst = config.get_dataset("ttbb_dl_powheg")
+    dataset_inst.add_process(config.x.procs.n.ttbb_custom)
+    dataset_inst = config.get_dataset("ttbb_sl_powheg")
+    dataset_inst.add_process(config.x.procs.n.ttbb_custom)
+    dataset_inst = config.get_dataset("ttbb_fh_powheg")
+    dataset_inst.add_process(config.x.procs.n.ttbb_custom)
+
     minor.label = "minor"
 
     color, sub_id = {
