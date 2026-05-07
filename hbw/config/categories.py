@@ -131,12 +131,6 @@ def add_mll_categories(config: od.Config) -> None:
         selection="catid_mll_high",
         label=r"$m_{\ell\ell} \geq 110$",
     )
-    cat_test_dy_met = config.add_category(  # noqa: F841
-        name="test_dy_met",
-        id=1800,
-        selection="catid_test_dy_met",
-        label=r"test_dy_met",  
-    )
 
 
 @call_once_on_config()
@@ -191,17 +185,30 @@ def add_lepton_categories(config: od.Config) -> None:
 
 @call_once_on_config()
 def add_njet_categories(config: od.Config) -> None:
+    
     config.add_category(
-        name="njet1",
-        id=100001,
-        selection="catid_njet1",
-        label=r"$N_{jet} >= 1$",
+        name="2j",
+        id=102000,
+        selection="catid_njet2",
+        label=r"$N_{jet} == 2$",
     )
     config.add_category(
-        name="njet3",
-        id=100003,
+        name="3j",
+        id=103000,
         selection="catid_njet3",
-        label=r"$N_{jet} >= 3$",
+        label=r"$N_{jet} == 3$",
+    )
+    config.add_category(
+        name="4j",
+        id=106000,
+        selection="catid_njet4",
+        label=r"$N_{jet} == 4$",
+    )
+    config.add_category(
+        name="5j",
+        id=100000,
+        selection="catid_njet5",
+        label=r"$N_{jet} >= 5$",
     )
 
 
@@ -224,13 +231,13 @@ def add_jet_categories(config: od.Config) -> None:
         name="2b",
         id=300,
         selection="catid_2b",
-        label=r"$==2 btag$",
+        label=r"$2 \ btag$",
     )
     cat_3b = config.add_category(  # noqa: F841
         name="3b",
         id=600,
         selection="catid_3b",
-        label=r"$==3 btag$",
+        label=r"$3 \ btag$",
     )
     cat_4b = config.add_category(  # noqa: F841
         name="4b",
@@ -238,65 +245,35 @@ def add_jet_categories(config: od.Config) -> None:
         selection="catid_4b",
         label=r"$\geq 4 btag$",
     )
-    # cat_4b_1l = config.add_category(  # noqa: F841
-    #     name="4b_1l",
-    #     id=1200,
-    #     selection="catid_4b_1l",
-    #     label=r"$\geq 4 btag(3mid,1los)$",  
-    # )
-    cat_4b_2l = config.add_category(  # noqa: F841
-        name="4b_2l",
-        id=1500,
-        selection="catid_4b_2l",
-        label=r"$\geq 4 btag(2mid,2los)$",  
+    cat_geq3b = config.add_category(  # noqa: F841
+        name="geq3b",
+        id=2100,
+        selection="catid_geq3b",
+        label=r"$\geq 3 btag$",
     )
+    cat_2b_sr = config.add_category(  # noqa: F841
+        name="2b_sr",
+        id=2400,
+        selection="catid_2b_sr",
+        label=r"$\geq 3 btag$",
+    )
+    # cat_4b_2l = config.add_category(  # noqa: F841
+    #     name="4b_2l",
+    #     id=1500,
+    #     selection="catid_4b_2l",
+    #     label=r"$\geq 4 btag(2mid,2los)$",  
+    # )
     # cat_2b_dr_les_3 = config.add_category(  # noqa: F841
     #     name="2b_dr_les_3",
     #     id=1800,
     #     selection="catid_2b_dr_les_3",
     #     label=r"$== 2 btag(<3dr)$",  
     # )
-    cat_2b_dr_more_2 = config.add_category(  # noqa: F841
-        name="2b_dr_more_2",
-        id=1200,
-        selection="catid_2b_dr_more_2",
-        label=r"$== 2 btag(>2dr)$",  
-    )
-    # cat_residual_2b = config.add_category(  # noqa: F841
-    #     name="residual_2b",
+    # cat_2b_dr_more_2 = config.add_category(  # noqa: F841
+    #     name="2b_dr_more_2",
     #     id=1200,
-    #     selection="catid_residual_2b",
-    #     label="residual 2b",
-    # )
-    # cat_residual_3b = config.add_category(  # noqa: F841
-    #     name="residual_3b",
-    #     id=1500,
-    #     selection="catid_residual_3b",
-    #     label="residual 3b",
-    # )
-    # cat_residual_4b = config.add_category(  # noqa: F841
-    #     name="residual_4b",
-    #     id=1800,
-    #     selection="catid_residual_4b",
-    #     label="residual 4b",
-    # )
-    # cat_3j = config.add_category(  # noqa: F841
-    #     name="3j",
-    #     id=1200,
-    #     selection="catid_3j",
-    #     label=r"$N_{jet} == 3$",
-    # )
-    # cat_4j = config.add_category(  # noqa: F841
-    #     name="4j",
-    #     id=1500,
-    #     selection="catid_4j",
-    #     label=r"$N_{jet} == 4$",
-    # )
-    # cat_5j = config.add_category(  # noqa: F841
-    #     name="5j",
-    #     id=1800,
-    #     selection="catid_5j",
-    #     label=r"$N_{jet} >= 5$",
+    #     selection="catid_2b_dr_more_2",
+    #     label=r"$== 2 btag(>2dr)$",  
     # )
 
 
@@ -361,20 +338,21 @@ def add_categories_production(config: od.Config) -> None:
         return
 
     add_jet_categories(config)
+    add_njet_categories(config)
 
     #
     # define all combinations of categories
     #
 
     category_blocks = OrderedDict({
-        "main": [config.get_category(cat) for cat in config.x.main_categories] + [config.get_category("test_dy_met")],
+        "main": [config.get_category(cat) for cat in config.x.main_categories],# + [config.get_category("test_dy_met")],
         # "lepid": [config.get_category("sr"), config.get_category("fake")],
         # "met": [config.get_category("highmet"), config.get_category("lowmet")],
         "lep": [config.get_category(lep_ch) for lep_ch in config.x.lepton_channels],
         # "jet": [config.get_category("resolved"), config.get_category("boosted")],
         # "b": [config.get_category("2b"), config.get_category("3b"), config.get_category("4b")],
-        "b": [config.get_category("2b"), config.get_category("3b"), config.get_category("4b"), config.get_category("4b_2l")],
-        # "b": [config.get_category("3j"), config.get_category("4j"), config.get_category("5j")],
+        "b": [config.get_category("2b"), config.get_category("3b"), config.get_category("4b")],
+        "njet": [config.get_category("3j"), config.get_category("4j"), config.get_category("5j")],
     })
     t0 = time()
     n_cats = create_category_combinations(
@@ -405,6 +383,7 @@ def add_categories_ml(config, ml_model_inst):
     #
 
     add_jet_categories(config)
+    add_njet_categories(config)
 
     #
     # add parent ml model categories
@@ -443,15 +422,15 @@ def add_categories_ml(config, ml_model_inst):
     # NOTE: building this many categories takes forever: has to be improved...
     category_blocks = OrderedDict({
         # NOTE: when building DNN categories, we do not need the control regions
-        "main": [sr, config.get_category("test_dy_met")],
+        "main": [sr,], # config.get_category("test_dy_met")
         # "main": [config.get_category(cat) for cat in config.x.main_categories],
         # "lepid": [config.get_category("sr"), config.get_category("fake")],
         # "met": [config.get_category("highmet"), config.get_category("lowmet")],
         "lep": [config.get_category(lep_ch) for lep_ch in config.x.lepton_channels],
         "jet": [config.get_category("resolved"), config.get_category("boosted")],
         # "b": [config.get_category("2b"), config.get_category("3b"), config.get_category("4b")],
-        "b": [config.get_category("2b"), config.get_category("3b"), config.get_category("4b"), config.get_category("4b_2l")],
-        # "b": [config.get_category("3j"), config.get_category("4j"), config.get_category("5j")],
+        "b": [config.get_category("2b"), config.get_category("3b"), config.get_category("4b")],
+        "njet": [config.get_category("3j"), config.get_category("4j"), config.get_category("5j")],
         "dnn": ml_categories,
     })
 

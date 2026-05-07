@@ -1071,7 +1071,7 @@ def add_config(
     # Version of required tasks
     cfg.x.versions = {
         "cf.CalibrateEvents": law.config.get_expanded("analysis", "default_common_version", "common2"),
-        "cf.SelectEvents": law.config.get_expanded("analysis", "default_selection_version", "iter2"),
+        # "cf.SelectEvents": law.config.get_expanded("analysis", "default_selection_version", "iter2"),
     }
 
     # add categories

@@ -171,11 +171,12 @@ def set_config_defaults_and_groups(config_inst):
                     "hhh_4b2w2l2nu_c32_d4m1", "hhh_4b2w2l2nu_c34_d49", "hhh_4b2w2l2nu_c3m1_d40",
                     "hhh_4b2w2l2nu_c3m1_d4m1", "hhh_4b2w2l2nu_c3m1p5_d4m0p5",
                     #tau variations
-                    "hhh_4b2tau_c30_d499", "hhh_4b2tau_c30_d4m1",
-                    "hhh_4b2tau_c319_d419", "hhh_4b2tau_c31_d40", "hhh_4b2tau_c31_d42",
-                    "hhh_4b2tau_c32_d4m1", "hhh_4b2tau_c34_d49", "hhh_4b2tau_c3m1_d40",
-                    "hhh_4b2tau_c3m1_d4m1", "hhh_4b2tau_c3m1p5_d4m0p5",],
-        "hhh_bkg": ["vv", "ttw", "tttt", "hh", "dy", "h", "st", "ttbb_custom", "tt_custom", "tt"],
+                    # "hhh_4b2tau_c30_d499", "hhh_4b2tau_c30_d4m1",
+                    # "hhh_4b2tau_c319_d419", "hhh_4b2tau_c31_d40", "hhh_4b2tau_c31_d42",
+                    # "hhh_4b2tau_c32_d4m1", "hhh_4b2tau_c34_d49", "hhh_4b2tau_c3m1_d40",
+                    # "hhh_4b2tau_c3m1_d4m1", "hhh_4b2tau_c3m1p5_d4m0p5",
+                    ],
+        "hhh_bkg": ["vv", "ttw", "tttt", "hh", "dy", "h", "st", "ttbb_custom", "tt_custom"],
         "hhh_bkg_lim": ["st", "dy", "vv_lim", "tt_sl", "tt_dl", "hh", "h_lim"],
         "vv_lim": [
                 "ww_2l2nu_powheg",

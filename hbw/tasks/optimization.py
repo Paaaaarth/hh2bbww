@@ -57,8 +57,8 @@ class GetAUCScores(PlotMLResultsSingleFold):
         self.ml_model_inst.trained_model = training_results["model"]
         self.ml_model_inst.best_model = training_results["best_model"]
 
-        self.ml_model_inst.process_insts = [
-            self.ml_model_inst.config_inst.get_process(proc)
+        process_insts = [
+            self.config_inst.get_process(proc)
             for proc in self.ml_model_inst.processes
         ]
 
@@ -82,7 +82,7 @@ class GetAUCScores(PlotMLResultsSingleFold):
             data["test"],
             output["plots"],
             "test",
-            self.ml_model_inst.process_insts,
+            process_insts,
             stats,
         )
         plot_roc_ovo(
@@ -90,7 +90,7 @@ class GetAUCScores(PlotMLResultsSingleFold):
             data["test"],
             output["plots"],
             "test",
-            self.ml_model_inst.process_insts,
+            process_insts,
             stats,
         )
 
@@ -119,36 +119,26 @@ class Optimizer(
         before starting optimizations")
 
     @property
-    def hyperparameter_space(self):
-        """
-        Define the hyperparameter space for the Bayesian optimization.
-        """
-        # TODO: might be nice if we could implement hyperparameter sets as a parameter
-        if hasattr(self, "_hyperparameter_space"):
-            return self._hyperparameter_space
-        from skopt.space import Integer, Real, Categorical  # noqa
+    def parameter_keys(self):
+        return [
+            "activation", "learningrate", "layer", "dropout",
+            "batchsize", "reduce_lr_factor", "reduce_lr_patience", "epochs"
+        ]
 
-        # define the hyperparameter space
-        self._hyperparameter_space = {
-            "negative_weights": Categorical(["ignore"]),
-            # "negative_weights": Categorical(["handle", "abs", "ignore"]),
-            "activation": Categorical(["relu", "elu"]),
-            "learningrate": Real(1e-6, 1e-2, prior="log-uniform"),
-            "layer": Integer(32, 1024, prior="log-uniform", base=2),
-            # "layer1": Integer(32, 1024, prior="log-uniform", base=2),
-            # "layer2": Integer(32, 1024, prior="log-uniform", base=2),
-            # "layer3": Integer(32, 1024, prior="log-uniform", base=2),
-            "dropout": Real(0.0, 0.5),
-            "batchsize": Integer(2 ** 7, 2 ** 14, prior="log-uniform", base=2),
-            "reduce_lr_factor": Real(0.1, 1.0),
-            "reduce_lr_patience": Integer(1, 10),
-            "epochs": Categorical([100]),
-        }
-        # self._hyperparameter_space = {
-        #     "layer": Integer(32, 1024, prior="log-uniform", base=2),
-        #     # "dropout": Real(0.0, 0.5),
-        # }
-        return self._hyperparameter_space
+    def ask_optuna(self, study):
+        trial = study.ask()
+        params = {}
+        params["activation"] = trial.suggest_categorical("activation", ["relu", "elu"])
+        params["learningrate"] = trial.suggest_float("learningrate", 1e-6, 1e-2, log=True)
+        params["layer"] = int(2**trial.suggest_int("layer_exp", 5, 10))
+        params["dropout"] = trial.suggest_float("dropout", 0.0, 0.5)
+        params["batchsize"] = int(2**trial.suggest_int("batchsize_exp", 7, 14))
+        params["reduce_lr_factor"] = trial.suggest_float("reduce_lr_factor", 0.1, 1.0)
+        params["reduce_lr_patience"] = trial.suggest_int("reduce_lr_patience", 1, 10)
+        params["epochs"] = trial.suggest_categorical("epochs", [100])
+        
+        param_tuple = tuple(params[k] for k in self.parameter_keys)
+        return trial, param_tuple
 
     def create_branch_map(self):
         return list(range(self.iterations))
@@ -156,7 +146,7 @@ class Optimizer(
     def requires(self):
         # NOTE: cache requirements?
         if self.branch == 0:
-            return None
+            return {}
         return Optimizer.req(self, branch=self.branch - 1)
 
     def workflow_requires(self):
@@ -166,31 +156,43 @@ class Optimizer(
         return self.target(f"optimizer_{self.branch}.pkl")
 
     def run(self):
-        import skopt
-        optimizer = self.input().load() if self.branch != 0 else skopt.Optimizer(
-            dimensions=list(self.hyperparameter_space.values()),
-            random_state=42,
-            n_initial_points=self.n_initial_points,
-        )
+        import optuna
+        import pickle
 
-        parameter_tuples = optimizer.ask(n_points=self.n_parallel)
-        logger.info(f"Optimizing parameters {list(self.hyperparameter_space.keys())}")
+        if self.branch == 0:
+            study = optuna.create_study(direction="minimize")
+        else:
+            with open(self.input().path, "rb") as f:
+                study = pickle.load(f)
+
+        trials = []
+        parameter_tuples = []
+        for _ in range(self.n_parallel):
+            trial, param_tuple = self.ask_optuna(study)
+            trials.append(trial)
+            parameter_tuples.append(param_tuple)
+
+        logger.info(f"Optimizing parameters {self.parameter_keys}")
         logger.info(f"yielding Objective for sets {parameter_tuples}")
+        
         output = yield Objective.req(
             self,
-            parameter_keys=list(self.hyperparameter_space.keys()),
+            parameter_keys=self.parameter_keys,
             parameter_tuples=parameter_tuples,
             iteration=self.branch,
             branch=-1,
         )
-        y = [f.load()["y"] for f in output["collection"].targets.values()]
+        
+        y_values = [f.load()["y"] for f in output["collection"].targets.values()]
 
-        optimizer.tell(parameter_tuples, y)
+        for trial, y in zip(trials, y_values):
+            study.tell(trial, y)
 
-        print(f"minimum after {self.branch + 1} iterations: {min(optimizer.yi)}")
+        print(f"minimum after {self.branch + 1} iterations: {study.best_value if len(study.trials) > 0 else 'N/A'}")
 
         with self.output().localize("w") as tmp:
-            tmp.dump(optimizer)
+            with open(tmp.path, "wb") as f:
+                pickle.dump(study, f)
 
 
 class Objective(
@@ -276,7 +278,7 @@ class Objective(
 
         # calculate objective value
         auc_sum = sum(stats.values()) / len(stats.values())
-        objective = -auc_sum
+        objective = -auc_sum  # Negative because Optuna minimizes by default
 
         results = {"x": self.branch_data, "y": objective}
 

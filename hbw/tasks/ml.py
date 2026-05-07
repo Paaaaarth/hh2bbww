@@ -754,7 +754,7 @@ class PlotMLResultsSingleFold(
             plot_roc_ovo,
             plot_output_nodes,
             plot_input_features,
-            plot_introspection,
+            # plot_introspection,
         )
 
         # create plots
@@ -847,15 +847,15 @@ class PlotMLResultsSingleFold(
         # del data.val
 
         # introspection plot for variable importance ranking
-        log_memory("Before plotting introspection")
-        plot_introspection(
-            self.ml_model_inst,
-            output["plots"],
-            data.test,
-            input_features=self.ml_model_inst.input_features_ordered,
-            stats=stats,
-        )
-        log_memory("After plotting introspection")
+        # log_memory("Before plotting introspection")
+        # plot_introspection(
+        #     self.ml_model_inst,
+        #     output["plots"],
+        #     data.test,
+        #     input_features=self.ml_model_inst.input_features_ordered,
+        #     stats=stats,
+        # )
+        # log_memory("After plotting introspection")
         plt.close("all")
         gc.collect()
 

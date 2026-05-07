@@ -67,10 +67,11 @@ def hbw_dataset_names(config: od.Config, as_list: bool = False) -> DotDict[str: 
                 "hhh_4b2w2l2nu_c32_d4m1_amcatnlo", "hhh_4b2w2l2nu_c34_d49_amcatnlo", "hhh_4b2w2l2nu_c3m1_d40_amcatnlo",
                 "hhh_4b2w2l2nu_c3m1_d4m1_amcatnlo", "hhh_4b2w2l2nu_c3m1p5_d4m0p5_amcatnlo",
                 # tau variations
-                "hhh_4b2tau_c30_d40_amcatnlo", "hhh_4b2tau_c30_d499_amcatnlo", "hhh_4b2tau_c30_d4m1_amcatnlo",
-                "hhh_4b2tau_c319_d419_amcatnlo", "hhh_4b2tau_c31_d40_amcatnlo", "hhh_4b2tau_c31_d42_amcatnlo",
-                "hhh_4b2tau_c32_d4m1_amcatnlo", "hhh_4b2tau_c34_d49_amcatnlo", "hhh_4b2tau_c3m1_d40_amcatnlo",
-                "hhh_4b2tau_c3m1_d4m1_amcatnlo", "hhh_4b2tau_c3m1p5_d4m0p5_amcatnlo",
+                "hhh_4b2tau_c30_d40_amcatnlo", 
+                # "hhh_4b2tau_c30_d499_amcatnlo", "hhh_4b2tau_c30_d4m1_amcatnlo",
+                # "hhh_4b2tau_c319_d419_amcatnlo", "hhh_4b2tau_c31_d40_amcatnlo", "hhh_4b2tau_c31_d42_amcatnlo",
+                # "hhh_4b2tau_c32_d4m1_amcatnlo", "hhh_4b2tau_c34_d49_amcatnlo", "hhh_4b2tau_c3m1_d40_amcatnlo",
+                # "hhh_4b2tau_c3m1_d4m1_amcatnlo", "hhh_4b2tau_c3m1p5_d4m0p5_amcatnlo",
                 ],
         "st": [
             "st_schannel_t_lep_4f_amcatnlo",
